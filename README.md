@@ -77,7 +77,7 @@ Payments will remain outside the platform.
 
 | Team Member | GitHub Username | Responsibility |
 |-------------|-----------------|----------------|
-| Member 1 |  | Restaurant & Menu |
+| Member 1 | lindafadiloubani-blip | Restaurant & Menu |
 | Member 2 |  | Orders |
 | Member 3 |  | Customer History & Reorder |
 | Member 4 |  | Delivery Zones & Dashboard |
