@@ -79,8 +79,8 @@ Payments will remain outside the platform.
 |-------------|-----------------|----------------|
 | Member 1 | lindafadiloubani-blip | Restaurant & Menu |
 | Member 2 | lamaalam | Orders |
-| Member 3 |  | Customer History & Reorder |
-| Member 4 |  | Delivery Zones & Dashboard |
+| Member 3 | maryamakkari534-rgb| Customer History & Reorder |
+| Member 4 | mariamayb6-cmyk | Delivery Zones & Dashboard |
 
 ### Responsibilities
 
