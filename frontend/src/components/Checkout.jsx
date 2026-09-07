@@ -4,6 +4,8 @@ function Checkout({ cartItems, onOrderSuccess }) {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [orderType, setOrderType] = useState('PICKUP');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
@@ -16,9 +18,11 @@ function Checkout({ cartItems, onOrderSuccess }) {
 
     const orderData = {
       restaurantId: 1,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      orderType: orderType,
+      customerName,
+      customerPhone,
+      orderType,
+      address: orderType === 'DELIVERY' ? address : '',
+      notes,
       items: cartItems.map((item) => ({
         menuItemId: item.id || item.menuItemId,
         quantity: item.quantity || 1,
@@ -27,16 +31,14 @@ function Checkout({ cartItems, onOrderSuccess }) {
 
     fetch('/api/orders', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to place order');
         return res.json();
       })
-      .then((data) => {
+      .then(() => {
         alert('Order placed successfully!');
         setSubmitting(false);
         if (onOrderSuccess) onOrderSuccess();
@@ -85,6 +87,23 @@ function Checkout({ cartItems, onOrderSuccess }) {
               <option value="PICKUP">Pickup</option>
               <option value="DELIVERY">Delivery</option>
             </select>
+
+            {orderType === 'DELIVERY' && (
+              <input
+                type="text"
+                placeholder="Delivery Address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+              />
+            )}
+
+            <textarea
+              placeholder="Notes / Special Instructions"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+
             <button type="submit" disabled={submitting} className="place-order-btn">
               {submitting ? 'Submitting...' : 'Place Order'}
             </button>
