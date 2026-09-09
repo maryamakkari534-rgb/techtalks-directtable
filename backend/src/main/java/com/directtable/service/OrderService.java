@@ -1,0 +1,175 @@
+package com.directtable.service;
+import com.directtable.repository.RestaurantRepository;
+import com.directtable.repository.CustomerOrderRepository;
+import com.directtable.repository.MenuItemRepository;
+import com.directtable.repository.CustomerRepository;
+import com.directtable.repository.OrderItemRepository;
+import com.directtable.dto.CreateOrderRequest;
+import com.directtable.entity.CustomerOrder;
+import com.directtable.entity.Restaurant;
+import com.directtable.entity.Customer;
+import com.directtable.dto.CreateOrderItemRequest;
+import com.directtable.entity.MenuItem;
+import com.directtable.entity.OrderItem;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;//to use @Service
+
+@Service//to let the spring know it's not an ordinary class, and to be able to manage the object
+public class OrderService {
+
+    private final RestaurantRepository restaurantRepository;//tools for the service to speak with database
+    private final CustomerOrderRepository customerOrderRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final CustomerRepository customerRepository;
+    private final OrderItemRepository orderItemRepository;
+
+    public OrderService(
+        RestaurantRepository restaurantRepository,
+        CustomerOrderRepository customerOrderRepository,
+        MenuItemRepository menuItemRepository,
+        CustomerRepository customerRepository,
+        OrderItemRepository orderItemRepository) {//constructor
+
+    this.restaurantRepository = restaurantRepository;
+    this.customerOrderRepository = customerOrderRepository;
+    this.menuItemRepository = menuItemRepository;
+    this.customerRepository = customerRepository;
+    this.orderItemRepository = orderItemRepository;
+    }
+// Makes the whole order creation process one transaction.
+// If any error happens while creating the order, all database changes are rolled back.
+@Transactional
+    // Creates a new order using the data received from the frontend
+public CustomerOrder createOrder(CreateOrderRequest request) {
+
+    // Find the restaurant using the restaurantId from the request
+    Restaurant restaurant = restaurantRepository
+            .findById(request.getRestaurantId())
+            .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+
+
+    // Get the order type and convert it to uppercase
+    // Example: delivery -> DELIVERY
+    String orderType = request.getOrderType().toUpperCase();
+
+
+    // The order type must be PICKUP or DELIVERY
+    if (!orderType.equals("PICKUP") && !orderType.equals("DELIVERY")) {
+        throw new RuntimeException("Invalid order type");
+    }
+
+
+    // If the order is DELIVERY, an address is required
+    if (orderType.equals("DELIVERY") &&
+            (request.getAddress() == null || request.getAddress().isBlank())) {
+
+        throw new RuntimeException("Address is required for delivery orders");
+    }
+
+
+    // Search for an existing customer using the phone number
+    Customer customer = customerRepository
+            .findByPhone(request.getCustomerPhone())
+            .orElseGet(() -> {
+
+                // If the customer does not exist, create a new customer
+                Customer newCustomer = new Customer();
+
+                newCustomer.setName(request.getCustomerName());
+                newCustomer.setPhone(request.getCustomerPhone());
+
+                // Save the new customer in the database
+                return customerRepository.save(newCustomer);
+            });
+
+
+    // Create a new order object
+    CustomerOrder order = new CustomerOrder();
+
+    // Connect the order to the restaurant
+    order.setRestaurant(restaurant);
+
+    // Connect the order to the customer
+    order.setCustomer(customer);
+
+    // Add order information
+    order.setOrderType(orderType);
+    order.setAddress(request.getAddress());
+    order.setNotes(request.getNotes());
+
+    // Every new order starts with status NEW
+    order.setStatus("NEW");
+
+    // Save the current date and time
+    order.setCreatedAt(java.time.LocalDateTime.now().toString());
+
+
+    // Save the order first so the database generates an ID
+    order = customerOrderRepository.save(order);
+
+
+    // Start the total amount from zero
+    double totalAmount = 0.0;
+
+
+    // Go through every item sent in the order
+    for (CreateOrderItemRequest itemRequest : request.getItems()) {
+
+        // Find the MenuItem in the database using its ID
+        MenuItem menuItem = menuItemRepository
+                .findById(itemRequest.getMenuItemId())
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+
+        if (!menuItem.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new RuntimeException(
+            "Menu item does not belong to this restaurant"
+             );
+        }
+
+
+        // Check that the menu item is available
+        if (!Boolean.TRUE.equals(menuItem.getAvailable())) {
+            throw new RuntimeException("Menu item is not available");
+        }
+
+
+        // Calculate this item's total:
+        // price × quantity
+        double itemTotal =
+                menuItem.getPrice() * itemRequest.getQuantity();
+
+
+        // Add this item's price to the whole order total
+        totalAmount = totalAmount + itemTotal;
+
+
+        // Create a new OrderItem
+        OrderItem orderItem = new OrderItem();
+
+        // Set the quantity
+        orderItem.setQuantity(itemRequest.getQuantity());
+
+        // Connect the OrderItem to this order
+        orderItem.setOrder(order);
+
+        // Connect the OrderItem to the MenuItem
+        orderItem.setMenuItem(menuItem);
+
+
+        // Save the OrderItem in the database
+        orderItemRepository.save(orderItem);
+    }
+
+
+    // After calculating all items, set the final total
+    order.setTotalAmount(totalAmount);
+
+
+    // Save the order again to update totalAmount
+    order = customerOrderRepository.save(order);
+
+
+    // Return the completed order
+    return order;
+}
+}
