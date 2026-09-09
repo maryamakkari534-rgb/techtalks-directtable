@@ -21,6 +21,14 @@ public class CustomerOrder {
 
     private String createdAt;
 
+    private String orderType;
+
+private String address;
+
+private String notes;
+
+private Double totalAmount;
+
     public Long getId() {
         return id;
     }
@@ -46,6 +54,41 @@ public class CustomerOrder {
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
+    public String getOrderType() {
+    return orderType;
+}
+
+public void setOrderType(String orderType) {
+    this.orderType = orderType;
+}
+
+
+public String getAddress() {
+    return address;
+}
+
+public void setAddress(String address) {
+    this.address = address;
+}
+
+
+public String getNotes() {
+    return notes;
+}
+
+public void setNotes(String notes) {
+    this.notes = notes;
+}
+
+
+public Double getTotalAmount() {
+    return totalAmount;
+}
+
+public void setTotalAmount(Double totalAmount) {
+    this.totalAmount = totalAmount;
+}
+
     // Each order belongs to one customer
 @ManyToOne
 private Customer customer;
