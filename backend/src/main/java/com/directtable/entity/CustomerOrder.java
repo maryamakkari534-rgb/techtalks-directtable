@@ -102,4 +102,28 @@ private Restaurant restaurant;
 // An order can contain multiple order items
 @OneToMany(mappedBy = "order")
 private List<OrderItem> orderItems;
+
+public Customer getCustomer() {
+    return customer;
+}
+
+public void setCustomer(Customer customer) {
+    this.customer = customer;
+}
+
+public Restaurant getRestaurant() {
+    return restaurant;
+}
+
+public void setRestaurant(Restaurant restaurant) {
+    this.restaurant = restaurant;
+}
+
+public List<OrderItem> getOrderItems() {
+    return orderItems;
+}
+
+public void setOrderItems(List<OrderItem> orderItems) {
+    this.orderItems = orderItems;
+}
 }
