@@ -173,7 +173,6 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     // Return the completed order
     return order;
 }
-// 👇 شغلك أنتِ الخاص بمهمة DT-12
     public List<CustomerOrder> getAllOrders() {
         return customerOrderRepository.findAll();
     }
