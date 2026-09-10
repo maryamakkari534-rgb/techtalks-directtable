@@ -13,6 +13,7 @@ import com.directtable.entity.MenuItem;
 import com.directtable.entity.OrderItem;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;//to use @Service
+import java.util.List;
 
 @Service//to let the spring know it's not an ordinary class, and to be able to manage the object
 public class OrderService {
@@ -172,4 +173,8 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     // Return the completed order
     return order;
 }
+// 👇 شغلك أنتِ الخاص بمهمة DT-12
+    public List<CustomerOrder> getAllOrders() {
+        return customerOrderRepository.findAll();
+    }
 }
