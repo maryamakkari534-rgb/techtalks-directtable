@@ -74,4 +74,11 @@ private Restaurant restaurant;
 @OneToMany(mappedBy = "menuItem")
 private List<OrderItem> orderItems;
 
+public Restaurant getRestaurant() {
+    return restaurant;
+}
+
+public void setRestaurant(Restaurant restaurant) {
+    this.restaurant = restaurant;
+}
 }

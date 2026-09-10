@@ -41,4 +41,21 @@ private CustomerOrder order;
 // Each order item refers to one menu item
 @ManyToOne
 private MenuItem menuItem;
+
+public CustomerOrder getOrder() {
+    return order;
+}
+
+public void setOrder(CustomerOrder order) {
+    this.order = order;
+}
+
+public MenuItem getMenuItem() {
+    return menuItem;
+}
+
+public void setMenuItem(MenuItem menuItem) {
+    this.menuItem = menuItem;
+}
+
 }
