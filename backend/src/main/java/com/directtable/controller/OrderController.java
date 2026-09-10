@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.directtable.entity.CustomerOrder;
 import com.directtable.service.OrderService;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -32,5 +33,9 @@ public class OrderController {
             "Order created successfully. Order ID: " + order.getId()
     );
 }
-
+@GetMapping
+public ResponseEntity<List<CustomerOrder>> getAllOrders() {
+    List<CustomerOrder> orders = orderService.getAllOrders();
+    return ResponseEntity.ok(orders);
+}
 }
