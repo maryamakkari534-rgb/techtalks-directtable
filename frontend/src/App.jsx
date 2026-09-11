@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import MenuList from './components/MenuList';
-import Checkout from './components/Checkout';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import RestaurantPage from "./pages/RestaurantPage";
+import OrdersDashboard from "./pages/OrdersDashboard";
+import MenuList from "./components/MenuList";
+import Checkout from "./components/Checkout";
+import { useState } from "react";
+
+
 function App() {
+
   const [cartItems, setCartItems] = useState([]);
 
   const handleAddToCart = (item) => {
@@ -13,12 +18,38 @@ function App() {
     setCartItems([]);
   };
 
+
   return (
-    <div className="container">
-      <h1>DirectTable</h1>
-      <MenuList onAddToCart={handleAddToCart} />
-      <Checkout cartItems={cartItems} onOrderSuccess={handleOrderSuccess} />
-    </div>
+    <BrowserRouter>
+
+      <Routes>
+
+        <Route 
+          path="/" 
+          element={<RestaurantPage />} 
+        />
+
+        <Route 
+          path="/restaurant/:id"
+          element={
+            <>
+              <MenuList onAddToCart={handleAddToCart} />
+              <Checkout
+                cartItems={cartItems}
+                onOrderSuccess={handleOrderSuccess}
+              />
+            </>
+          }
+        />
+
+        <Route 
+          path="/dashboard/orders"
+          element={<OrdersDashboard />}
+        />
+
+      </Routes>
+
+    </BrowserRouter>
   );
 }
 
