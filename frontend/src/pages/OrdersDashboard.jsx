@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from "react";
 
 function OrdersDashboard() {
-
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/orders")
-      .then((res) => res.json())
-      .then((data) => setOrders(data))
-      .catch((err) => console.log(err));
-  }, []);
+    fetch("/api/orders")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch orders");
+        }
 
+        return res.json();
+      })
+      .then((data) => {
+        setOrders(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching orders:", err);
+      });
+  }, []);
 
   return (
     <div>
@@ -22,13 +30,47 @@ function OrdersDashboard() {
         orders.map((order) => (
           <div key={order.id}>
             <h3>Order #{order.id}</h3>
-            <p>Status: {order.status}</p>
-            <p>Type: {order.orderType}</p>
-            <p>Total: {order.totalAmount}</p>
+
+            <p>
+              <strong>Name:</strong> {order.customerName}
+            </p>
+
+            <p>
+              <strong>Phone:</strong> {order.customerPhone}
+            </p>
+
+            <p>
+              <strong>Status:</strong> {order.status}
+            </p>
+
+            <p>
+              <strong>Type:</strong> {order.orderType}
+            </p>
+
+            {order.orderType === "DELIVERY" && (
+              <p>
+                <strong>Address:</strong> {order.address}
+              </p>
+            )}
+
+            {order.notes && (
+              <p>
+                <strong>Notes:</strong> {order.notes}
+              </p>
+            )}
+
+            <p>
+              <strong>Total:</strong> ${order.totalAmount}
+            </p>
+
+            <p>
+              <strong>Created At:</strong> {order.createdAt}
+            </p>
+
+            <hr />
           </div>
         ))
       )}
-
     </div>
   );
 }

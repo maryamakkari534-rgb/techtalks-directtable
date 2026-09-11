@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 function Checkout({ cartItems, onOrderSuccess }) {
+  const { id } = useParams();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [orderType, setOrderType] = useState('PICKUP');
@@ -17,7 +19,7 @@ function Checkout({ cartItems, onOrderSuccess }) {
     setSubmitting(true);
 
     const orderData = {
-      restaurantId: 1,
+      restaurantId: Number(id),
       customerName,
       customerPhone,
       orderType,
@@ -36,8 +38,7 @@ function Checkout({ cartItems, onOrderSuccess }) {
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to place order');
-        return res.json();
-      })
+        return res.text();      })
       .then(() => {
         alert('Order placed successfully!');
         setSubmitting(false);
