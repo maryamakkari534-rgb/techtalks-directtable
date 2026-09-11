@@ -1,17 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 function MenuList({ onAddToCart }) {
-  const [items, setItems] = useState([]);
-
-  useEffect(() => {
-    fetch('/api/menu')
-      .then((res) => {
-        if (!res.ok) throw new Error('Network response was not ok');
-        return res.json();
-      })
-      .then((data) => setItems(data))
-      .catch((err) => console.log('Waiting for backend connection:', err));
-  }, []);
+  const [items] = useState([
+  {
+    id: 1,
+    name: 'Burger',
+    description: 'Test burger',
+    price: 7.5,
+  },
+]);
 
   return (
     <div>

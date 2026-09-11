@@ -12,6 +12,7 @@ import com.directtable.dto.CreateOrderItemRequest;
 import com.directtable.entity.MenuItem;
 import com.directtable.entity.OrderItem;
 import org.springframework.transaction.annotation.Transactional;
+import com.directtable.dto.OrderResponse;
 import org.springframework.stereotype.Service;//to use @Service
 import java.util.List;
 
@@ -173,7 +174,21 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     // Return the completed order
     return order;
 }
-    public List<CustomerOrder> getAllOrders() {
-        return customerOrderRepository.findAll();
-    }
+
+    public List<OrderResponse> getAllOrders() {
+    return customerOrderRepository.findAll()
+            .stream()
+            .map(order -> new OrderResponse(
+                    order.getId(),
+                    order.getCustomer().getName(),
+                    order.getCustomer().getPhone(),
+                    order.getStatus(),
+                    order.getOrderType(),
+                    order.getAddress(),
+                    order.getNotes(),
+                    order.getTotalAmount(),
+                    order.getCreatedAt()
+            ))
+            .toList();
+}
 }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.directtable.entity.CustomerOrder;
 import com.directtable.service.OrderService;
 import org.springframework.web.bind.annotation.GetMapping;
+import com.directtable.dto.OrderResponse;
 import java.util.List;
 
 @RestController
@@ -34,8 +35,8 @@ public class OrderController {
     );
 }
 @GetMapping
-public ResponseEntity<List<CustomerOrder>> getAllOrders() {
-    List<CustomerOrder> orders = orderService.getAllOrders();
+public ResponseEntity<List<OrderResponse>> getAllOrders() {
+    List<OrderResponse> orders = orderService.getAllOrders();
     return ResponseEntity.ok(orders);
 }
 }
