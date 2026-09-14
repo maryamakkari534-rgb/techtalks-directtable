@@ -43,7 +43,7 @@ public ResponseEntity<List<OrderResponse>> getAllOrders() {
     return ResponseEntity.ok(orders);
 }
 @PutMapping("/{id}/status")
-public ResponseEntity<CustomerOrder> updateOrderStatus(
+public ResponseEntity<OrderResponse> updateOrderStatus(
         @PathVariable Long id,
         @RequestBody UpdateOrderStatusRequest request
 ) {
@@ -53,6 +53,18 @@ public ResponseEntity<CustomerOrder> updateOrderStatus(
             request.getStatus()
     );
 
-    return ResponseEntity.ok(order);
+    OrderResponse response = new OrderResponse(
+            order.getId(),
+            order.getCustomer().getName(),
+            order.getCustomer().getPhone(),
+            order.getStatus(),
+            order.getOrderType(),
+            order.getAddress(),
+            order.getNotes(),
+            order.getTotalAmount(),
+            order.getCreatedAt()
+    );
+
+    return ResponseEntity.ok(response);
 }
 }
