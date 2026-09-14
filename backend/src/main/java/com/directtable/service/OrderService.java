@@ -211,4 +211,14 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
             ))
             .toList();
 }
+public CustomerOrder updateOrderStatus(Long id, String status) {
+
+    CustomerOrder order = customerOrderRepository
+            .findById(id)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
+
+    order.setStatus(status);
+
+    return customerOrderRepository.save(order);
+}
 }
