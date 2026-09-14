@@ -43,12 +43,25 @@ public class OrderService {
 @Transactional
     // Creates a new order using the data received from the frontend
 public CustomerOrder createOrder(CreateOrderRequest request) {
+    // Check if request exists
+    if (request == null) {
+        throw new RuntimeException("Order request cannot be null");
+    }
+
+    // Check if order contains items
+    if (request.getItems() == null || request.getItems().isEmpty()) {
+        throw new RuntimeException("Order must contain at least one item");
+    }
 
     // Find the restaurant using the restaurantId from the request
     Restaurant restaurant = restaurantRepository
             .findById(request.getRestaurantId())
             .orElseThrow(() -> new RuntimeException("Restaurant not found"));
-
+    
+    // Check order type before converting to uppercase
+    if (request.getOrderType() == null) {
+        throw new RuntimeException("Order type is required");
+    }
 
     // Get the order type and convert it to uppercase
     // Example: delivery -> DELIVERY
@@ -116,6 +129,13 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
 
     // Go through every item sent in the order
     for (CreateOrderItemRequest itemRequest : request.getItems()) {
+        if (itemRequest.getQuantity() <= 0) {
+            throw new RuntimeException("Quantity must be greater than zero");
+        }
+
+        if (itemRequest.getMenuItemId() == null) {
+            throw new RuntimeException("Menu item ID is required");
+         }
 
         // Find the MenuItem in the database using its ID
         MenuItem menuItem = menuItemRepository
