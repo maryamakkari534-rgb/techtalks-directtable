@@ -67,4 +67,13 @@ public ResponseEntity<OrderResponse> updateOrderStatus(
 
     return ResponseEntity.ok(response);
 }
+@GetMapping("/history/{phone}")
+public ResponseEntity<List<OrderResponse>> getCustomerOrderHistory(
+        @PathVariable String phone) {
+
+    List<OrderResponse> orders =
+            orderService.getCustomerOrderHistory(phone);
+
+    return ResponseEntity.ok(orders);
+}
 }

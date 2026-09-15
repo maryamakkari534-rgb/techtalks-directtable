@@ -221,4 +221,21 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
 
     return customerOrderRepository.save(order);
 }
+public List<OrderResponse> getCustomerOrderHistory(String phone) {
+
+    return customerOrderRepository.findByCustomer_Phone(phone)
+            .stream()
+            .map(order -> new OrderResponse(
+                    order.getId(),
+                    order.getCustomer().getName(),
+                    order.getCustomer().getPhone(),
+                    order.getStatus(),
+                    order.getOrderType(),
+                    order.getAddress(),
+                    order.getNotes(),
+                    order.getTotalAmount(),
+                    order.getCreatedAt()
+            ))
+            .toList();
+}
 }
