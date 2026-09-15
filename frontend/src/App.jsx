@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import MenuList from './components/MenuList';
 import Checkout from './components/Checkout';
+=======
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import RestaurantPage from "./pages/RestaurantPage";
+import OrdersDashboard from "./pages/OrdersDashboard";
+import MenuList from "./components/MenuList";
+import Checkout from "./components/Checkout";
+import { useState } from "react";
+import CustomerHistory from "./pages/CustomerHistory";
+
+>>>>>>> origin/develop
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -23,12 +34,47 @@ function App() {
         </button>
       </header>
 
+<<<<<<< HEAD
       {showCheckout ? (
         <Checkout cartItems={cartItems} />
       ) : (
         <MenuList onAddToCart={handleAddToCart} />
       )}
     </div>
+=======
+      <Routes>
+
+        <Route 
+          path="/" 
+          element={<RestaurantPage />} 
+        />
+
+        <Route 
+          path="/restaurant/:id"
+          element={
+            <>
+              <MenuList onAddToCart={handleAddToCart} />
+              <Checkout
+                cartItems={cartItems}
+                onOrderSuccess={handleOrderSuccess}
+              />
+            </>
+          }
+        />
+
+        <Route 
+          path="/dashboard/orders"
+          element={<OrdersDashboard />}
+        />
+        <Route
+          path="/customer-history"
+          element={<CustomerHistory />}
+        />
+
+      </Routes>
+
+    </BrowserRouter>
+>>>>>>> origin/develop
   );
 }
 

@@ -1,12 +1,12 @@
 package com.directtable.dto;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 public class CreateOrderItemRequest{
 
-    @NotNull
+    @NotNull(message = "Menu item ID is required")
     private Long menuItemId;
-    @Min(1)
+    @Positive(message = "Quantity must be greater than zero")
     private int quantity;
 
     public Long getMenuItemId(){
