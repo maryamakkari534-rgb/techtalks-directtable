@@ -4,6 +4,7 @@ import OrdersDashboard from "./pages/OrdersDashboard";
 import MenuList from "./components/MenuList";
 import Checkout from "./components/Checkout";
 import { useState } from "react";
+import CustomerHistory from "./pages/CustomerHistory";
 
 
 function App() {
@@ -45,6 +46,10 @@ function App() {
         <Route 
           path="/dashboard/orders"
           element={<OrdersDashboard />}
+        />
+        <Route
+          path="/customer-history"
+          element={<CustomerHistory />}
         />
 
       </Routes>
