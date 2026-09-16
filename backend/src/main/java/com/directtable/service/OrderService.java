@@ -216,7 +216,16 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
     CustomerOrder order = customerOrderRepository
             .findById(id)
             .orElseThrow(() -> new RuntimeException("Order not found"));
+List<String> allowedStatuses = List.of(
+        "NEW",
+        "PREPARING",
+        "READY",
+        "DELIVERED"
+);
 
+if (!allowedStatuses.contains(status)) {
+    throw new RuntimeException("Invalid order status");
+}
     order.setStatus(status);
 
     return customerOrderRepository.save(order);
