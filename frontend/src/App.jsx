@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RestaurantPage from "./pages/RestaurantPage";
 import OrdersDashboard from "./pages/OrdersDashboard";
+import CustomerHistory from "./pages/CustomerHistory";
 import MenuList from "./components/MenuList";
 import Checkout from "./components/Checkout";
-import CustomerHistory from "./pages/CustomerHistory";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -23,24 +23,27 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <header
+          style={{
+            display: "flex",
+            justify: "space-between",
+            marginBottom: "20px",
+          }}
+        >
           <h1>La Rose Sucrée Menu</h1>
-          <button 
+          <button
             onClick={() => setShowCheckout(!showCheckout)}
-            style={{ padding: '10px 20px', cursor: 'pointer' }}
+            style={{ padding: "10px 20px", cursor: "pointer" }}
           >
-            {showCheckout ? 'العودة للقائمة' : `السلة (${cartItems.length})`}
+            {showCheckout ? "العودة للقائمة" : `السلة (${cartItems.length})`}
           </button>
         </header>
 
         <Routes>
-          <Route 
-            path="/" 
-            element={<RestaurantPage />} 
-          />
+          <Route path="/" element={<RestaurantPage />} />
 
-          <Route 
+          <Route
             path="/restaurant/:id"
             element={
               showCheckout ? (
@@ -54,14 +57,8 @@ function App() {
             }
           />
 
-          <Route 
-            path="/dashboard/orders"
-            element={<OrdersDashboard />}
-          />
-          <Route
-            path="/customer-history"
-            element={<CustomerHistory />}
-          />
+          <Route path="/dashboard/orders" element={<OrdersDashboard />} />
+          <Route path="/customer-history" element={<CustomerHistory />} />
         </Routes>
       </div>
     </BrowserRouter>
