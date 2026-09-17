@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 function OrdersDashboard() {
   const [orders, setOrders] = useState([]);
@@ -23,6 +24,9 @@ function OrdersDashboard() {
   return (
     <div>
       <h1>Orders Dashboard</h1>
+      <Link to="/customer-history">
+         Customer Order History
+      </Link>
 
       {orders.length === 0 ? (
         <p>No orders found</p>

@@ -4,21 +4,26 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 
 public class CreateOrderRequest{
 
-    @NotNull
+    @NotNull(message = "Restaurant ID is required")
     private Long restaurantId;
-    @NotBlank
+    @NotBlank(message = "Customer name is required")
     private String customerName;
-    @NotBlank
+    @NotBlank(message = "Customer phone is required")
+    @Pattern(
+        regexp = "^[0-9]{8}$",
+        message = "Phone number must contain 8 digits"
+    )
     private String customerPhone;
-    @NotBlank
+    @NotBlank(message = "Order type is required")
     private String orderType;
     private String address;
     private String notes;
 
-    @NotEmpty
+    @NotEmpty(message = "Order items cannot be empty")
     @Valid
     private List<CreateOrderItemRequest> items;
 

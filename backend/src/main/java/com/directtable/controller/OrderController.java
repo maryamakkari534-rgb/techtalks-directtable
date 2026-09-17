@@ -11,6 +11,9 @@ import com.directtable.service.OrderService;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.directtable.dto.OrderResponse;
 import java.util.List;
+import com.directtable.dto.UpdateOrderStatusRequest;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -37,6 +40,40 @@ public class OrderController {
 @GetMapping
 public ResponseEntity<List<OrderResponse>> getAllOrders() {
     List<OrderResponse> orders = orderService.getAllOrders();
+    return ResponseEntity.ok(orders);
+}
+@PutMapping("/{id}/status")
+public ResponseEntity<OrderResponse> updateOrderStatus(
+        @PathVariable Long id,
+        @RequestBody UpdateOrderStatusRequest request
+) {
+
+    CustomerOrder order = orderService.updateOrderStatus(
+            id,
+            request.getStatus()
+    );
+
+    OrderResponse response = new OrderResponse(
+            order.getId(),
+            order.getCustomer().getName(),
+            order.getCustomer().getPhone(),
+            order.getStatus(),
+            order.getOrderType(),
+            order.getAddress(),
+            order.getNotes(),
+            order.getTotalAmount(),
+            order.getCreatedAt()
+    );
+
+    return ResponseEntity.ok(response);
+}
+@GetMapping("/history/{phone}")
+public ResponseEntity<List<OrderResponse>> getCustomerOrderHistory(
+        @PathVariable String phone) {
+
+    List<OrderResponse> orders =
+            orderService.getCustomerOrderHistory(phone);
+
     return ResponseEntity.ok(orders);
 }
 }
