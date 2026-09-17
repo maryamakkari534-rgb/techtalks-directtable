@@ -1,17 +1,10 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import MenuList from './components/MenuList';
-import Checkout from './components/Checkout';
-=======
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RestaurantPage from "./pages/RestaurantPage";
 import OrdersDashboard from "./pages/OrdersDashboard";
+import CustomerHistory from "./pages/CustomerHistory";
 import MenuList from "./components/MenuList";
 import Checkout from "./components/Checkout";
-import { useState } from "react";
-import CustomerHistory from "./pages/CustomerHistory";
-
->>>>>>> origin/develop
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -22,59 +15,51 @@ function App() {
     setCartItems((prevItems) => [...prevItems, item]);
   };
 
+  const handleOrderSuccess = () => {
+    setCartItems([]);
+  };
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1>La Rose Sucrée Menu</h1>
-        <button 
-          onClick={() => setShowCheckout(!showCheckout)}
-          style={{ padding: '10px 20px', cursor: 'pointer' }}
+    <BrowserRouter>
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <header
+          style={{
+            display: "flex",
+            justify: "space-between",
+            marginBottom: "20px",
+          }}
         >
-          {showCheckout ? 'العودة للقائمة' : `السلة (${cartItems.length})`}
-        </button>
-      </header>
+          <h1>La Rose Sucrée Menu</h1>
+          <button
+            onClick={() => setShowCheckout(!showCheckout)}
+            style={{ padding: "10px 20px", cursor: "pointer" }}
+          >
+            {showCheckout ? "العودة للقائمة" : `السلة (${cartItems.length})`}
+          </button>
+        </header>
 
-<<<<<<< HEAD
-      {showCheckout ? (
-        <Checkout cartItems={cartItems} />
-      ) : (
-        <MenuList onAddToCart={handleAddToCart} />
-      )}
-    </div>
-=======
-      <Routes>
+        <Routes>
+          <Route path="/" element={<RestaurantPage />} />
 
-        <Route 
-          path="/" 
-          element={<RestaurantPage />} 
-        />
+          <Route
+            path="/restaurant/:id"
+            element={
+              showCheckout ? (
+                <Checkout
+                  cartItems={cartItems}
+                  onOrderSuccess={handleOrderSuccess}
+                />
+              ) : (
+                <MenuList onAddToCart={handleAddToCart} />
+              )
+            }
+          />
 
-        <Route 
-          path="/restaurant/:id"
-          element={
-            <>
-              <MenuList onAddToCart={handleAddToCart} />
-              <Checkout
-                cartItems={cartItems}
-                onOrderSuccess={handleOrderSuccess}
-              />
-            </>
-          }
-        />
-
-        <Route 
-          path="/dashboard/orders"
-          element={<OrdersDashboard />}
-        />
-        <Route
-          path="/customer-history"
-          element={<CustomerHistory />}
-        />
-
-      </Routes>
-
+          <Route path="/dashboard/orders" element={<OrdersDashboard />} />
+          <Route path="/customer-history" element={<CustomerHistory />} />
+        </Routes>
+      </div>
     </BrowserRouter>
->>>>>>> origin/develop
   );
 }
 
