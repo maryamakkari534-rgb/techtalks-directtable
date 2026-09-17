@@ -15,8 +15,10 @@ function App() {
     setCartItems((prevItems) => [...prevItems, item]);
   };
 
+  // التعامل مع نجاح الطلب
   const handleOrderSuccess = () => {
     setCartItems([]);
+    setShowCheckout(false);
   };
 
   return (
