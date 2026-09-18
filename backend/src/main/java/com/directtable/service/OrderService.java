@@ -217,10 +217,10 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
             .findById(id)
             .orElseThrow(() -> new RuntimeException("Order not found"));
 List<String> allowedStatuses = List.of(
-        "NEW",
-        "PREPARING",
-        "READY",
-        "DELIVERED"
+    "NEW",
+    "PREPARING",
+    "READY",
+    "COMPLETED"
 );
 
 if (!allowedStatuses.contains(status)) {

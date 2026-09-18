@@ -1,9 +1,11 @@
 -- Restaurant
-INSERT INTO restaurant
-(id, name, address, phone, description)
-VALUES
-(1, 'La Rose Sucre', 'Tripoli', '70542829', 'Restaurant menu');
-
+INSERT INTO restaurant (id, name, address, phone, description)
+VALUES (1, 'La Rose Sucre', 'Tripoli', '70542829', 'Restaurant menu')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    address = EXCLUDED.address,
+    phone = EXCLUDED.phone,
+    description = EXCLUDED.description;
 
 -- Menu Items
 INSERT INTO menu_item
@@ -148,4 +150,10 @@ VALUES
 (91, 'عصير ليو', 'Leo Juice', 100000, true, 1),
 (92, 'عصير فريز', 'Strawberry Juice', 100000, true, 1),
 
-(93, 'عصير سموذي', 'Smoothie', 140000, true, 1);
+(93, 'عصير سموذي', 'Smoothie', 140000, true, 1)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    available = EXCLUDED.available,
+    restaurant_id = EXCLUDED.restaurant_id;
