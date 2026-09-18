@@ -81,7 +81,7 @@ function CustomerHistory() {
             </p>
 
             <p>
-              Total: ${order.totalAmount}
+               Total: {(order.totalAmount || 0).toLocaleString()} L.L.
             </p>
 
             <p>
