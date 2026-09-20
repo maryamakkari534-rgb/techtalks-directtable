@@ -216,16 +216,36 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
     CustomerOrder order = customerOrderRepository
             .findById(id)
             .orElseThrow(() -> new RuntimeException("Order not found"));
-List<String> allowedStatuses = List.of(
-    "NEW",
-    "PREPARING",
-    "READY",
-    "COMPLETED"
-);
 
-if (!allowedStatuses.contains(status)) {
-    throw new RuntimeException("Invalid order status");
-}
+    List<String> allowedStatuses = List.of(
+            "NEW",
+            "PREPARING",
+            "READY",
+            "COMPLETED"
+    );
+
+    if (!allowedStatuses.contains(status)) {
+        throw new RuntimeException("Invalid order status");
+    }
+
+    String currentStatus = order.getStatus();
+
+    boolean validTransition =
+            (currentStatus.equals("NEW") && status.equals("PREPARING")) ||
+            (currentStatus.equals("PREPARING") && status.equals("READY")) ||
+            (currentStatus.equals("READY") && status.equals("COMPLETED"));
+
+
+    if (!validTransition) {
+        throw new RuntimeException(
+                "Invalid status transition from "
+                + currentStatus
+                + " to "
+                + status
+        );
+    }
+
+
     order.setStatus(status);
 
     return customerOrderRepository.save(order);
