@@ -14,7 +14,7 @@ import java.util.List;
 import com.directtable.dto.UpdateOrderStatusRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-
+import com.directtable.dto.ReorderResponse;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -75,5 +75,14 @@ public ResponseEntity<List<OrderResponse>> getCustomerOrderHistory(
             orderService.getCustomerOrderHistory(phone);
 
     return ResponseEntity.ok(orders);
+}
+@GetMapping("/{id}/reorder")
+public ResponseEntity<ReorderResponse> getReorderData(
+        @PathVariable Long id) {
+
+    ReorderResponse response =
+            orderService.getReorderData(id);
+
+    return ResponseEntity.ok(response);
 }
 }
