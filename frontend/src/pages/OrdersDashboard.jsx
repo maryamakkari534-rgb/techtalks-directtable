@@ -46,8 +46,9 @@ function OrdersDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update order status");
-      }
+  const errorData = await response.json();
+  throw new Error(errorData.message);
+}
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
