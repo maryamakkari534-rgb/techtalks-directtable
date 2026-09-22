@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import com.directtable.entity.MenuItem;
+import org.springframework.web.bind.annotation.PathVariable;
 
 // Marks this class as a REST controller that handles API requests
 @RestController
@@ -23,6 +25,10 @@ public class RestaurantController {
     public List<Restaurant> getAllRestaurants() {
         return restaurantService.getAllRestaurants(); // Gets the restaurant list provided by the service
     }
-
+// Returns the menu for a specific restaurant by its ID
+@GetMapping("/api/restaurants/{id}/menu")
+public List<MenuItem> getRestaurantMenu(@PathVariable Long id) {
+    return restaurantService.getMenuByRestaurantId(id);
+}
 
 }

@@ -14,6 +14,10 @@ import com.directtable.entity.OrderItem;
 import org.springframework.transaction.annotation.Transactional;
 import com.directtable.dto.OrderResponse;
 import org.springframework.stereotype.Service;//to use @Service
+
+import com.directtable.dto.ReorderResponse;
+import com.directtable.dto.ReorderItemResponse;
+
 import java.util.List;
 
 @Service//to let the spring know it's not an ordinary class, and to be able to manage the object
@@ -217,6 +221,35 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
             .findById(id)
             .orElseThrow(() -> new RuntimeException("Order not found"));
 
+    List<String> allowedStatuses = List.of(
+            "NEW",
+            "PREPARING",
+            "READY",
+            "COMPLETED"
+    );
+
+    if (!allowedStatuses.contains(status)) {
+        throw new RuntimeException("Invalid order status");
+    }
+
+    String currentStatus = order.getStatus();
+
+    boolean validTransition =
+            (currentStatus.equals("NEW") && status.equals("PREPARING")) ||
+            (currentStatus.equals("PREPARING") && status.equals("READY")) ||
+            (currentStatus.equals("READY") && status.equals("COMPLETED"));
+
+
+    if (!validTransition) {
+        throw new RuntimeException(
+                "Invalid status transition from "
+                + currentStatus
+                + " to "
+                + status
+        );
+    }
+
+
     order.setStatus(status);
 
     return customerOrderRepository.save(order);
@@ -237,5 +270,35 @@ public List<OrderResponse> getCustomerOrderHistory(String phone) {
                     order.getCreatedAt()
             ))
             .toList();
+}
+public ReorderResponse getReorderData(Long orderId) {
+
+    // Find the old order
+    CustomerOrder order = customerOrderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
+
+    // Get all items that belong to this order
+    List<OrderItem> orderItems =
+            orderItemRepository.findByOrder_Id(orderId);
+
+    // Convert OrderItems into ReorderItemResponse objects
+    List<ReorderItemResponse> items = orderItems
+            .stream()
+            .map(orderItem -> new ReorderItemResponse(
+                    orderItem.getMenuItem().getId(),
+                    orderItem.getMenuItem().getName(),
+                    orderItem.getMenuItem().getPrice(),
+                    orderItem.getQuantity(),
+                    orderItem.getMenuItem().getAvailable()
+            ))
+            .toList();
+
+    // Return old order ID, restaurant ID and items
+    return new ReorderResponse(
+            order.getId(),
+            order.getRestaurant().getId(),
+            items
+    );
 }
 }
