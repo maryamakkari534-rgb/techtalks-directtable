@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function CustomerHistory() {
+function CustomerHistory({ onAddToCart, setShowCheckout }) {
 
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const getHistory = () => {
 
@@ -32,7 +34,36 @@ function CustomerHistory() {
         setLoading(false);
       });
   };
+const handleReorder = (orderId) => {
 
+  fetch(`/api/orders/${orderId}/reorder`)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to reorder");
+      }
+
+      return res.json();
+    })
+    .then((data) => {
+
+      data.items.forEach((item) => {
+
+        onAddToCart({
+          id: item.menuItemId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        });
+
+      });
+
+      setShowCheckout(true);
+      navigate("/restaurant/1");    })
+    .catch((err) => {
+      console.error(err);
+      alert("Failed to reorder");
+    });
+};
 
   return (
     <div>
@@ -87,7 +118,11 @@ function CustomerHistory() {
             <p>
               Date: {order.createdAt}
             </p>
-
+            <button
+                onClick={() => handleReorder(order.id)}
+            >
+              Reorder
+            </button>
             <hr />
 
           </div>

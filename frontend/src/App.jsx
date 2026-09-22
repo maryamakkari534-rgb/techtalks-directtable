@@ -5,6 +5,7 @@ import OrdersDashboard from "./pages/OrdersDashboard";
 import CustomerHistory from "./pages/CustomerHistory";
 import MenuList from "./components/MenuList";
 import Checkout from "./components/Checkout";
+import { Link } from "react-router-dom";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -32,6 +33,19 @@ function App() {
           }}
         >
           <h1>La Rose Sucrée Menu</h1>
+          <Link
+           to="/customer-history"
+           style={{
+            marginRight: "15px",
+            textDecoration: "none",
+            padding: "10px 20px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+          }}
+         >
+           سجل الطلبات
+          </Link>
+
           <button
             onClick={() => setShowCheckout(!showCheckout)}
             style={{ padding: "10px 20px", cursor: "pointer" }}
@@ -58,10 +72,18 @@ function App() {
           />
 
           <Route path="/dashboard/orders" element={<OrdersDashboard />} />
-          <Route path="/customer-history" element={<CustomerHistory />} />
+          <Route
+          path="/customer-history"
+          element={
+            <CustomerHistory
+              onAddToCart={handleAddToCart}
+              setShowCheckout={setShowCheckout}
+            />
+      }
+     />
         </Routes>
       </div>
-    </BrowserRouter>
+    </BrowserRouter >
   );
 }
 
