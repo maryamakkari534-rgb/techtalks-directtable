@@ -39,8 +39,9 @@ function OrdersDashboard() {
   body: JSON.stringify({ status: newStatus }),
 });
       if (!response.ok) {
-        throw new Error("Failed to update order status");
-      }
+  const errorData = await response.json();
+  throw new Error(errorData.message);
+}
 
       // Update state locally
       setOrders((prevOrders) =>

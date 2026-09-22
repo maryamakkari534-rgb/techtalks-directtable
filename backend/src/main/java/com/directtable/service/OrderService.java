@@ -7,6 +7,7 @@ import com.directtable.repository.OrderItemRepository;
 import com.directtable.dto.CreateOrderRequest;
 import com.directtable.entity.CustomerOrder;
 import com.directtable.entity.Restaurant;
+import com.directtable.exception.ResourceNotFoundException;
 import com.directtable.entity.Customer;
 import com.directtable.dto.CreateOrderItemRequest;
 import com.directtable.entity.MenuItem;
@@ -14,7 +15,6 @@ import com.directtable.entity.OrderItem;
 import org.springframework.transaction.annotation.Transactional;
 import com.directtable.dto.OrderResponse;
 import org.springframework.stereotype.Service;//to use @Service
-
 import com.directtable.dto.ReorderResponse;
 import com.directtable.dto.ReorderItemResponse;
 
@@ -218,8 +218,8 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
 public CustomerOrder updateOrderStatus(Long id, String status) {
 
     CustomerOrder order = customerOrderRepository
-            .findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
     List<String> allowedStatuses = List.of(
             "NEW",
@@ -275,8 +275,8 @@ public ReorderResponse getReorderData(Long orderId) {
 
     // Find the old order
     CustomerOrder order = customerOrderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+        .findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
     // Get all items that belong to this order
     List<OrderItem> orderItems =
