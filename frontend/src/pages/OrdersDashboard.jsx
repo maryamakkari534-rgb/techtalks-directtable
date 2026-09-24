@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 function OrdersDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
-  
+
   // DT-31: Filter State
   const [statusFilter, setStatusFilter] = useState("ALL");
-  
+
   // DT-32: Expanded Order IDs for Item Details
   const [expandedOrders, setExpandedOrders] = useState({});
 
   // Fetch orders from backend
   const fetchOrders = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/orders");
+      const response = await fetch("/api/orders");
       if (!response.ok) {
         throw new Error("Failed to fetch orders list");
       }
@@ -36,8 +37,8 @@ function OrdersDashboard() {
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     try {
-      const response = await fetch(`http://localhost:8080/api/orders/${orderId}/status`, {
-        method: "PATCH",
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -60,7 +61,7 @@ function OrdersDashboard() {
     }
   };
 
-  // DT-32: Toggle Expand/Collapse for order items
+  // DT-32: Toggle Expand/Collapse for order items & details
   const toggleOrderDetails = (orderId) => {
     setExpandedOrders((prev) => ({
       ...prev,
@@ -81,21 +82,40 @@ function OrdersDashboard() {
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <h2>Orders Dashboard</h2>
 
-      {/* DT-31: Filter Controls */}
-      <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>Filter by Status:</label>
-        <select
-          id="statusFilter"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <Link
+          to="/customer-history"
+          style={{
+            display: "inline-block",
+            textDecoration: "none",
+            padding: "8px 14px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            color: "#333",
+            backgroundColor: "#f9f9f9",
+          }}
         >
-          <option value="ALL">All Orders</option>
-          <option value="NEW">NEW</option>
-          <option value="PREPARING">PREPARING</option>
-          <option value="READY">READY</option>
-          <option value="COMPLETED">COMPLETED</option>
-        </select>
+          View Customer History
+        </Link>
+
+        {/* DT-31: Filter Controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>
+            Filter by Status:
+          </label>
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+          >
+            <option value="ALL">All Orders</option>
+            <option value="NEW">NEW</option>
+            <option value="PREPARING">PREPARING</option>
+            <option value="READY">READY</option>
+            <option value="COMPLETED">COMPLETED</option>
+          </select>
+        </div>
       </div>
 
       {filteredOrders.length === 0 ? (
@@ -113,8 +133,6 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Order ID</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Customer</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Notes</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Current Status</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action Status</th>
@@ -130,16 +148,10 @@ function OrdersDashboard() {
                     {order.customerName || order.customer?.name || "N/A"}
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    {order.phone || order.customer?.phone || "-"}
+                    {order.customerPhone || order.phone || order.customer?.phone || "-"}
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    {order.address || "-"}
-                  </td>
-                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    {order.notes || "-"}
-                  </td>
-                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    ${order.totalPrice || order.total || 0}
+                    {(order.totalAmount || order.totalPrice || 0).toLocaleString()} L.L.
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd", fontWeight: "bold" }}>
                     {order.status}
@@ -169,24 +181,30 @@ function OrdersDashboard() {
                         cursor: "pointer",
                         borderRadius: "4px",
                         border: "1px solid #ccc",
-                        backgroundColor: "#fafafa"
+                        backgroundColor: "#fafafa",
                       }}
                     >
-                      {expandedOrders[order.id] ? "Hide Items" : "View Items"}
+                      {expandedOrders[order.id] ? "Hide Details" : "View Details"}
                     </button>
                   </td>
                 </tr>
 
-                {/* DT-32: Expandable Details Row */}
+                {/* DT-32: Granular Order Details Expandable Row */}
                 {expandedOrders[order.id] && (
                   <tr>
-                    <td colSpan="9" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
-                      <strong>Order Items:</strong>
+                    <td colSpan="7" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
+                      <div style={{ marginBottom: "10px" }}>
+                        <p style={{ margin: "3px 0" }}><strong>Order Type:</strong> {order.type || order.orderType || "Delivery"}</p>
+                        <p style={{ margin: "3px 0" }}><strong>Address:</strong> {order.address || "N/A"}</p>
+                        <p style={{ margin: "3px 0" }}><strong>Notes:</strong> {order.notes || "None"}</p>
+                      </div>
+
+                      <strong style={{ display: "block", marginTop: "10px" }}>Ordered Items & Quantities:</strong>
                       {order.items && order.items.length > 0 ? (
-                        <ul style={{ marginTop: "8px", marginBottom: "0" }}>
+                        <ul style={{ marginTop: "6px", marginBottom: "0", paddingLeft: "20px" }}>
                           {order.items.map((item, idx) => (
-                            <li key={idx}>
-                              {item.menuItem?.name || item.name || "Item"} x {item.quantity || 1} - ${item.price || item.menuItem?.price || 0}
+                            <li key={idx} style={{ marginBottom: "4px" }}>
+                              <strong>{item.menuItem?.name || item.name || "Item"}</strong> - Quantity: {item.quantity || 1} | Price: {(item.price || item.menuItem?.price || 0).toLocaleString()} L.L.
                             </li>
                           ))}
                         </ul>
