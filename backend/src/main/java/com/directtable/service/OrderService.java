@@ -17,7 +17,7 @@ import com.directtable.dto.OrderResponse;
 import org.springframework.stereotype.Service;//to use @Service
 import com.directtable.dto.ReorderResponse;
 import com.directtable.dto.ReorderItemResponse;
-
+import com.directtable.dto.OrderDetailsResponse;
 import java.util.List;
 
 @Service//to let the spring know it's not an ordinary class, and to be able to manage the object
@@ -298,6 +298,38 @@ public ReorderResponse getReorderData(Long orderId) {
     return new ReorderResponse(
             order.getId(),
             order.getRestaurant().getId(),
+            items
+    );
+}
+public OrderDetailsResponse getOrderDetails(Long orderId) {
+
+    CustomerOrder order = customerOrderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
+
+
+    List<ReorderItemResponse> items = order.getOrderItems()
+            .stream()
+            .map(orderItem -> new ReorderItemResponse(
+                    orderItem.getMenuItem().getId(),
+                    orderItem.getMenuItem().getName(),
+                    orderItem.getMenuItem().getPrice(),
+                    orderItem.getQuantity(),
+                    orderItem.getMenuItem().getAvailable()
+            ))
+            .toList();
+
+
+    return new OrderDetailsResponse(
+            order.getId(),
+            order.getCustomer().getName(),
+            order.getCustomer().getPhone(),
+            order.getStatus(),
+            order.getOrderType(),
+            order.getAddress(),
+            order.getNotes(),
+            order.getTotalAmount(),
+            order.getCreatedAt(),
             items
     );
 }

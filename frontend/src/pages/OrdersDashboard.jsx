@@ -12,6 +12,7 @@ function OrdersDashboard() {
   
   // DT-32: Expanded Order IDs for Item Details
   const [expandedOrders, setExpandedOrders] = useState({});
+  const [orderDetails, setOrderDetails] = useState({});
 
   // Fetch orders from backend
   const fetchOrders = async () => {
@@ -63,12 +64,35 @@ function OrdersDashboard() {
   };
 
   // DT-32: Toggle Expand/Collapse for order items
-  const toggleOrderDetails = (orderId) => {
-    setExpandedOrders((prev) => ({
-      ...prev,
-      [orderId]: !prev[orderId],
-    }));
-  };
+  const toggleOrderDetails = async (orderId) => {
+
+  if (!expandedOrders[orderId]) {
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}/details`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch order details");
+      }
+
+      const data = await response.json();
+
+      setOrderDetails((prev) => ({
+        ...prev,
+        [orderId]: data,
+      }));
+
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
+  }
+
+  setExpandedOrders((prev) => ({
+    ...prev,
+    [orderId]: !prev[orderId],
+  }));
+};        
 
   // DT-31: Filter logic
   const filteredOrders = orders.filter((order) => {
@@ -203,11 +227,12 @@ function OrdersDashboard() {
                   <tr>
                     <td colSpan="9" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
-                      {order.items && order.items.length > 0 ? (
+                      {orderDetails[order.id]?.items &&
+                         orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
-                          {order.items.map((item, idx) => (
+                          {orderDetails[order.id].items.map((item, idx) => (
                             <li key={idx}>
-                              {item.menuItem?.name || item.name || "Item"} x {item.quantity || 1} - {(item.price || item.menuItem?.price || 0).toLocaleString()} L.L.
+                                 {item.name} x {item.quantity} - {item.price.toLocaleString()} L.L.
                             </li>
                           ))}
                         </ul>
