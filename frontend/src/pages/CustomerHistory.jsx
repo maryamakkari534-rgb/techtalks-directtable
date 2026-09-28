@@ -6,6 +6,7 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState({});
   const navigate = useNavigate();
 
   const getHistory = () => {
@@ -64,6 +65,29 @@ const handleReorder = (orderId) => {
       alert("Failed to reorder");
     });
 };
+const handleViewDetails = (orderId) => {
+
+  fetch(`/api/orders/${orderId}/details`)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch order details");
+      }
+
+      return res.json();
+    })
+    .then((data) => {
+
+      setSelectedOrderDetails((prev) => ({
+        ...prev,
+        [orderId]: data,
+      }));
+
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Failed to load order details");
+    });
+};
 
   return (
     <div>
@@ -119,10 +143,37 @@ const handleReorder = (orderId) => {
               Date: {order.createdAt}
             </p>
             <button
+               onClick={() => handleViewDetails(order.id)}
+            >
+               View Details
+            </button>
+
+            <button
                 onClick={() => handleReorder(order.id)}
             >
-              Reorder
+                Reorder
             </button>
+            {selectedOrderDetails[order.id] && (
+  <div>
+
+    <h4>Order Items:</h4>
+
+    <ul>
+      {selectedOrderDetails[order.id].items.map((item, index) => (
+        <li key={index}>
+          {item.name} x {item.quantity}
+          {" - "}
+          {item.price.toLocaleString()} L.L.
+        </li>
+        ))}
+        </ul>
+
+        <p>
+            Notes: {selectedOrderDetails[order.id].notes || "-"}
+        </p>
+
+        </div>
+        )}
             <hr />
 
           </div>
