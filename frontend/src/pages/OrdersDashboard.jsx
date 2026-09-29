@@ -7,24 +7,25 @@ function OrdersDashboard() {
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   
-  
+  // DT-31: Filter State
   const [statusFilter, setStatusFilter] = useState("ALL");
   
-  
-  const [expandedOrders, setExpandedOrders] = useState({});
-
   // Delivery Area Selection State
   const [selectedArea, setSelectedArea] = useState("ALL");
 
-  // قائمة مناطق التوصيل الرئسية واسعارها
+  // DT-32: Expanded Order IDs for Item Details
+  const [expandedOrders, setExpandedOrders] = useState({});
+  const [orderDetails, setOrderDetails] = useState({});
+
+  // Delivery Areas List
   const deliveryAreas = [
-    { id: "ALL", name: "All Areas", fee: 0 },
-    { id: "BEIRUT", name: "Beirut Central", fee: 200000 },
-    { id: "HAZMIEH", name: "Hazmieh & Surroundings", fee: 300000 },
-    { id: "JABAL", name: "Metn / Mount Lebanon", fee: 400000 },
+    { id: "ALL", name: "All Areas" },
+    { id: "BEIRUT", name: "Beirut Central" },
+    { id: "HAZMIEH", name: "Hazmieh & Surroundings" },
+    { id: "JABAL", name: "Metn / Mount Lebanon" },
   ];
 
-  
+  // Fetch orders from backend
   const fetchOrders = async () => {
     try {
       const response = await fetch("/api/orders");
@@ -44,7 +45,7 @@ function OrdersDashboard() {
     fetchOrders();
   }, []);
 
-  
+  // Update order status via API
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     try {
@@ -73,15 +74,35 @@ function OrdersDashboard() {
     }
   };
 
-  
-  const toggleOrderDetails = (orderId) => {
+  // DT-32: Toggle Expand/Collapse for order items
+  const toggleOrderDetails = async (orderId) => {
+    if (!expandedOrders[orderId]) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/details`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch order details");
+        }
+
+        const data = await response.json();
+
+        setOrderDetails((prev) => ({
+          ...prev,
+          [orderId]: data,
+        }));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+    }
+
     setExpandedOrders((prev) => ({
       ...prev,
       [orderId]: !prev[orderId],
     }));
   };
 
-  
+  // Combined Filter logic (Status & Delivery Area)
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
     const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
@@ -113,7 +134,7 @@ function OrdersDashboard() {
 
         {/* Filter Controls */}
         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          {/* Delivery Area Selection */}
+          {/* Delivery Area Filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label htmlFor="areaFilter" style={{ fontWeight: "bold" }}>
               Delivery Area:
@@ -132,10 +153,10 @@ function OrdersDashboard() {
             </select>
           </div>
 
-          {/* DT-31: Status Filter */}
+          {/* DT-31: Filter Controls */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>
-              Status:
+              Filter by Status:
             </label>
             <select
               id="statusFilter"
@@ -228,7 +249,7 @@ function OrdersDashboard() {
                         cursor: "pointer",
                         borderRadius: "4px",
                         border: "1px solid #ccc",
-                        backgroundColor: "#fafafa",
+                        backgroundColor: "#fafafa"
                       }}
                     >
                       {expandedOrders[order.id] ? "Hide Items" : "View Items"}
@@ -241,11 +262,12 @@ function OrdersDashboard() {
                   <tr>
                     <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
-                      {order.items && order.items.length > 0 ? (
+                      {orderDetails[order.id]?.items &&
+                        orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
-                          {order.items.map((item, idx) => (
+                          {orderDetails[order.id].items.map((item, idx) => (
                             <li key={idx}>
-                              {item.menuItem?.name || item.name || "Item"} x {item.quantity || 1} - {(item.price || item.menuItem?.price || 0).toLocaleString()} L.L.
+                              {item.name} x {item.quantity} - {item.price.toLocaleString()} L.L.
                             </li>
                           ))}
                         </ul>
