@@ -263,7 +263,7 @@ function OrdersDashboard() {
                     <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
                       {orderDetails[order.id]?.items &&
-                        orderDetails[order.id].items.length > 0 ? (
+                      orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
                           {orderDetails[order.id].items.map((item, idx) => (
                             <li key={idx}>
