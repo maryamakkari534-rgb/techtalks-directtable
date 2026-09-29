@@ -1,5 +1,7 @@
 package com.directtable.controller;
 import com.directtable.dto.CreateOrderRequest;
+import com.directtable.dto.OrderDetailsResponse;
+
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,6 +84,15 @@ public ResponseEntity<ReorderResponse> getReorderData(
 
     ReorderResponse response =
             orderService.getReorderData(id);
+
+    return ResponseEntity.ok(response);
+}
+@GetMapping("/{id}/details")
+public ResponseEntity<OrderDetailsResponse> getOrderDetails(
+        @PathVariable Long id) {
+
+    OrderDetailsResponse response =
+            orderService.getOrderDetails(id);
 
     return ResponseEntity.ok(response);
 }
