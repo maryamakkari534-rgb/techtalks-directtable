@@ -10,9 +10,20 @@ function OrdersDashboard() {
   // DT-31: Filter State
   const [statusFilter, setStatusFilter] = useState("ALL");
   
+  // Delivery Area Selection State
+  const [selectedArea, setSelectedArea] = useState("ALL");
+
   // DT-32: Expanded Order IDs for Item Details
   const [expandedOrders, setExpandedOrders] = useState({});
   const [orderDetails, setOrderDetails] = useState({});
+
+  // Delivery Areas List
+  const deliveryAreas = [
+    { id: "ALL", name: "All Areas" },
+    { id: "BEIRUT", name: "Beirut Central" },
+    { id: "HAZMIEH", name: "Hazmieh & Surroundings" },
+    { id: "JABAL", name: "Metn / Mount Lebanon" },
+  ];
 
   // Fetch orders from backend
   const fetchOrders = async () => {
@@ -47,9 +58,9 @@ function OrdersDashboard() {
       });
 
       if (!response.ok) {
-  const errorData = await response.json();
-  throw new Error(errorData.message);
-}
+        const errorData = await response.json();
+        throw new Error(errorData.message);
+      }
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
@@ -65,39 +76,37 @@ function OrdersDashboard() {
 
   // DT-32: Toggle Expand/Collapse for order items
   const toggleOrderDetails = async (orderId) => {
+    if (!expandedOrders[orderId]) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/details`);
 
-  if (!expandedOrders[orderId]) {
+        if (!response.ok) {
+          throw new Error("Failed to fetch order details");
+        }
 
-    try {
-      const response = await fetch(`/api/orders/${orderId}/details`);
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch order details");
+        setOrderDetails((prev) => ({
+          ...prev,
+          [orderId]: data,
+        }));
+      } catch (err) {
+        alert(err.message);
+        return;
       }
-
-      const data = await response.json();
-
-      setOrderDetails((prev) => ({
-        ...prev,
-        [orderId]: data,
-      }));
-
-    } catch (err) {
-      alert(err.message);
-      return;
     }
-  }
 
-  setExpandedOrders((prev) => ({
-    ...prev,
-    [orderId]: !prev[orderId],
-  }));
-};        
+    setExpandedOrders((prev) => ({
+      ...prev,
+      [orderId]: !prev[orderId],
+    }));
+  };
 
-  // DT-31: Filter logic
+  // Combined Filter logic (Status & Delivery Area)
   const filteredOrders = orders.filter((order) => {
-    if (statusFilter === "ALL") return true;
-    return order.status === statusFilter;
+    const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
+    const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
+    return matchesStatus && matchesArea;
   });
 
   if (loading) return <div style={{ padding: "20px" }}>Loading orders...</div>;
@@ -107,7 +116,7 @@ function OrdersDashboard() {
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <h2>Orders Dashboard</h2>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
         <Link
           to="/customer-history"
           style={{
@@ -123,28 +132,50 @@ function OrdersDashboard() {
           View Customer History
         </Link>
 
-        {/* DT-31: Filter Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>
-            Filter by Status:
-          </label>
-          <select
-            id="statusFilter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
-          >
-            <option value="ALL">All Orders</option>
-            <option value="NEW">NEW</option>
-            <option value="PREPARING">PREPARING</option>
-            <option value="READY">READY</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
+        {/* Filter Controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          {/* Delivery Area Filter */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="areaFilter" style={{ fontWeight: "bold" }}>
+              Delivery Area:
+            </label>
+            <select
+              id="areaFilter"
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+            >
+              {deliveryAreas.map((area) => (
+                <option key={area.id} value={area.id}>
+                  {area.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* DT-31: Filter Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>
+              Filter by Status:
+            </label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+            >
+              <option value="ALL">All Orders</option>
+              <option value="NEW">NEW</option>
+              <option value="PREPARING">PREPARING</option>
+              <option value="READY">READY</option>
+              <option value="COMPLETED">COMPLETED</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {filteredOrders.length === 0 ? (
-        <p>No orders found for this status.</p>
+        <p>No orders found matching the selected filters.</p>
       ) : (
         <table
           style={{
@@ -158,6 +189,7 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Order ID</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Customer</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Area</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Notes</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
@@ -176,6 +208,9 @@ function OrdersDashboard() {
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {order.customerPhone || order.phone || order.customer?.phone || "-"}
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {order.deliveryArea || "Default"}
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {order.address || "-"}
@@ -225,14 +260,14 @@ function OrdersDashboard() {
                 {/* DT-32: Expandable Details Row */}
                 {expandedOrders[order.id] && (
                   <tr>
-                    <td colSpan="9" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
+                    <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
                       {orderDetails[order.id]?.items &&
-                         orderDetails[order.id].items.length > 0 ? (
+                      orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
                           {orderDetails[order.id].items.map((item, idx) => (
                             <li key={idx}>
-                                 {item.name} x {item.quantity} - {item.price.toLocaleString()} L.L.
+                              {item.name} x {item.quantity} - {item.price.toLocaleString()} L.L.
                             </li>
                           ))}
                         </ul>
