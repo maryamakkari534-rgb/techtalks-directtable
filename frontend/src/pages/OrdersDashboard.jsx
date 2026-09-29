@@ -4,16 +4,16 @@ import { Link } from "react-router-dom";
 function OrdersDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
-  
-  // DT-31: Filter State
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  
-  // Delivery Area Selection State
-  const [selectedArea, setSelectedArea] = useState("ALL");
 
-  // DT-32: Expanded Order IDs for Item Details
+  // Filter States
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedArea, setSelectedArea] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Expandable Order Details State
   const [expandedOrders, setExpandedOrders] = useState({});
   const [orderDetails, setOrderDetails] = useState({});
 
@@ -26,7 +26,8 @@ function OrdersDashboard() {
   ];
 
   // Fetch orders from backend
-  const fetchOrders = async () => {
+  const fetchOrders = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) setIsRefreshing(true);
     try {
       const response = await fetch("/api/orders");
       if (!response.ok) {
@@ -34,10 +35,12 @@ function OrdersDashboard() {
       }
       const data = await response.json();
       setOrders(data);
+      setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -74,7 +77,7 @@ function OrdersDashboard() {
     }
   };
 
-  // DT-32: Toggle Expand/Collapse for order items
+  // Toggle Expand/Collapse for order items
   const toggleOrderDetails = async (orderId) => {
     if (!expandedOrders[orderId]) {
       try {
@@ -102,11 +105,34 @@ function OrdersDashboard() {
     }));
   };
 
-  // Combined Filter logic (Status & Delivery Area)
+  // Helper for Status Badge Styling
+  const getStatusBadgeStyle = (status) => {
+    switch (status) {
+      case "NEW":
+        return { backgroundColor: "#e3f2fd", color: "#0d47a1", border: "1px solid #90caf9" };
+      case "PREPARING":
+        return { backgroundColor: "#fff3e0", color: "#e65100", border: "1px solid #ffcc80" };
+      case "READY":
+        return { backgroundColor: "#f3e5f5", color: "#4a148c", border: "1px solid #ce93d8" };
+      case "COMPLETED":
+        return { backgroundColor: "#e8f5e9", color: "#1b5e20", border: "1px solid #a5d6a7" };
+      default:
+        return { backgroundColor: "#eee", color: "#333", border: "1px solid #ccc" };
+    }
+  };
+
+  // Combined Filter & Search logic
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
     const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
-    return matchesStatus && matchesArea;
+
+    const name = (order.customerName || order.customer?.name || "").toLowerCase();
+    const phone = (order.customerPhone || order.phone || order.customer?.phone || "").toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
+
+    const matchesSearch = query === "" || name.includes(query) || phone.includes(query);
+
+    return matchesStatus && matchesArea && matchesSearch;
   });
 
   if (loading) return <div style={{ padding: "20px" }}>Loading orders...</div>;
@@ -114,7 +140,26 @@ function OrdersDashboard() {
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h2>Orders Dashboard</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+        <h2>Orders & Delivery Management</h2>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={() => fetchOrders(true)}
+          disabled={isRefreshing}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {isRefreshing ? "Refreshing..." : "🔄 Refresh Data"}
+        </button>
+      </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
         <Link
@@ -132,13 +177,26 @@ function OrdersDashboard() {
           View Customer History
         </Link>
 
-        {/* Filter Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+        {/* Filter Controls & Search */}
+        <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
+          {/* Customer / Phone Search */}
+          <input
+            type="text"
+            placeholder="Search Name or Phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              fontSize: "14px",
+              width: "200px"
+            }}
+          />
+
           {/* Delivery Area Filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label htmlFor="areaFilter" style={{ fontWeight: "bold" }}>
-              Delivery Area:
-            </label>
+            <label htmlFor="areaFilter" style={{ fontWeight: "bold" }}>Area:</label>
             <select
               id="areaFilter"
               value={selectedArea}
@@ -153,11 +211,9 @@ function OrdersDashboard() {
             </select>
           </div>
 
-          {/* DT-31: Filter Controls */}
+          {/* Status Filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>
-              Filter by Status:
-            </label>
+            <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>Status:</label>
             <select
               id="statusFilter"
               value={statusFilter}
@@ -175,15 +231,9 @@ function OrdersDashboard() {
       </div>
 
       {filteredOrders.length === 0 ? (
-        <p>No orders found matching the selected filters.</p>
+        <p>No orders found matching the selected criteria.</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "10px",
-          }}
-        >
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
           <thead>
             <tr style={{ backgroundColor: "#f2f2f2", textAlign: "left" }}>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Order ID</th>
@@ -191,10 +241,10 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Area</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Notes</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Est. Time / Driver</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Current Status</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action Status</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Status</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Details</th>
             </tr>
           </thead>
@@ -210,30 +260,45 @@ function OrdersDashboard() {
                     {order.customerPhone || order.phone || order.customer?.phone || "-"}
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    {order.deliveryArea || "Default"}
+                    <span style={{
+                      padding: "4px 8px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      backgroundColor: "#f0f0f0",
+                      fontWeight: "bold"
+                    }}>
+                      {order.deliveryArea || "Default"}
+                    </span>
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {order.address || "-"}
                   </td>
-                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                    {order.notes || "-"}
+                  {/* Driver & Estimated Time */}
+                  <td style={{ padding: "10px", border: "1px solid #ddd", fontSize: "13px" }}>
+                    <div>⏱ {order.estimatedTime || "30-45 mins"}</div>
+                    <div style={{ color: "#555", marginTop: "2px" }}>🛵 {order.driverName || "Unassigned"}</div>
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {(order.totalAmount || order.totalPrice || 0).toLocaleString()} L.L.
                   </td>
-                  <td style={{ padding: "10px", border: "1px solid #ddd", fontWeight: "bold" }}>
-                    {order.status}
+                  {/* Status Badge */}
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    <span style={{
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      ...getStatusBadgeStyle(order.status)
+                    }}>
+                      {order.status}
+                    </span>
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     <select
                       value={order.status}
                       disabled={updatingId === order.id}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      style={{
-                        padding: "5px 10px",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
+                      style={{ padding: "5px 10px", borderRadius: "4px", cursor: "pointer" }}
                     >
                       <option value="NEW">NEW</option>
                       <option value="PREPARING">PREPARING</option>
@@ -257,13 +322,12 @@ function OrdersDashboard() {
                   </td>
                 </tr>
 
-                {/* DT-32: Expandable Details Row */}
+                {/* Expandable Items Row */}
                 {expandedOrders[order.id] && (
                   <tr>
                     <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
-                      {orderDetails[order.id]?.items &&
-                        orderDetails[order.id].items.length > 0 ? (
+                      {orderDetails[order.id]?.items && orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
                           {orderDetails[order.id].items.map((item, idx) => (
                             <li key={idx}>
