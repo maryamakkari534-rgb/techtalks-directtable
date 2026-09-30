@@ -24,4 +24,7 @@ public class RestaurantService {
     public List<MenuItem> getMenuByRestaurantId(Long id) {
         return menuRepository.findByRestaurantId(id); 
     }
+   public List<MenuItem> getMenuByCategory(String categoryName) {
+    return menuRepository.findByCategory(categoryName);
+}
 }
