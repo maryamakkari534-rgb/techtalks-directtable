@@ -4,11 +4,30 @@ import { Link } from "react-router-dom";
 function OrdersDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
 
+  // Filter States
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedArea, setSelectedArea] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Expandable Order Details State
+  const [expandedOrders, setExpandedOrders] = useState({});
+  const [orderDetails, setOrderDetails] = useState({});
+
+  // Delivery Areas List
+  const deliveryAreas = [
+    { id: "ALL", name: "All Areas" },
+    { id: "BEIRUT", name: "Beirut Central" },
+    { id: "HAZMIEH", name: "Hazmieh & Surroundings" },
+    { id: "JABAL", name: "Metn / Mount Lebanon" },
+  ];
+
   // Fetch orders from backend
-  const fetchOrders = async () => {
+  const fetchOrders = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) setIsRefreshing(true);
     try {
       const response = await fetch("/api/orders");
       if (!response.ok) {
@@ -16,10 +35,12 @@ function OrdersDashboard() {
       }
       const data = await response.json();
       setOrders(data);
+      setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -32,17 +53,18 @@ function OrdersDashboard() {
     setUpdatingId(orderId);
     try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ status: newStatus }),
-});
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
       if (!response.ok) {
-        throw new Error("Failed to update order status");
+        const errorData = await response.json();
+        throw new Error(errorData.message);
       }
 
-      // Update state locally
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order
@@ -55,88 +77,271 @@ function OrdersDashboard() {
     }
   };
 
+  // Toggle Expand/Collapse for order items
+  const toggleOrderDetails = async (orderId) => {
+    if (!expandedOrders[orderId]) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/details`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch order details");
+        }
+
+        const data = await response.json();
+
+        setOrderDetails((prev) => ({
+          ...prev,
+          [orderId]: data,
+        }));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+    }
+
+    setExpandedOrders((prev) => ({
+      ...prev,
+      [orderId]: !prev[orderId],
+    }));
+  };
+
+  // Helper for Status Badge Styling
+  const getStatusBadgeStyle = (status) => {
+    switch (status) {
+      case "NEW":
+        return { backgroundColor: "#e3f2fd", color: "#0d47a1", border: "1px solid #90caf9" };
+      case "PREPARING":
+        return { backgroundColor: "#fff3e0", color: "#e65100", border: "1px solid #ffcc80" };
+      case "READY":
+        return { backgroundColor: "#f3e5f5", color: "#4a148c", border: "1px solid #ce93d8" };
+      case "COMPLETED":
+        return { backgroundColor: "#e8f5e9", color: "#1b5e20", border: "1px solid #a5d6a7" };
+      default:
+        return { backgroundColor: "#eee", color: "#333", border: "1px solid #ccc" };
+    }
+  };
+
+  // Combined Filter & Search logic
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
+    const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
+
+    const name = (order.customerName || order.customer?.name || "").toLowerCase();
+    const phone = (order.customerPhone || order.phone || order.customer?.phone || "").toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
+
+    const matchesSearch = query === "" || name.includes(query) || phone.includes(query);
+
+    return matchesStatus && matchesArea && matchesSearch;
+  });
+
   if (loading) return <div style={{ padding: "20px" }}>Loading orders...</div>;
   if (error) return <div style={{ padding: "20px", color: "red" }}>Error: {error}</div>;
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h2>Orders Dashboard</h2>
-      <Link
-  to="/customer-history"
-  style={{
-    display: "inline-block",
-    marginBottom: "20px",
-    textDecoration: "none",
-    padding: "8px 14px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-  }}
->
-  View Customer History
-</Link>
-
-      {orders.length === 0 ? (
-        <p>No orders found.</p>
-      ) : (
-        <table
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+        <h2>Orders & Delivery Management</h2>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={() => fetchOrders(true)}
+          disabled={isRefreshing}
           style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "20px",
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "bold",
           }}
         >
+          {isRefreshing ? "Refreshing..." : "🔄 Refresh Data"}
+        </button>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
+        <Link
+          to="/customer-history"
+          style={{
+            display: "inline-block",
+            textDecoration: "none",
+            padding: "8px 14px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            color: "#333",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          View Customer History
+        </Link>
+
+        {/* Filter Controls & Search */}
+        <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
+          {/* Customer / Phone Search */}
+          <input
+            type="text"
+            placeholder="Search Name or Phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              fontSize: "14px",
+              width: "200px"
+            }}
+          />
+
+          {/* Delivery Area Filter */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="areaFilter" style={{ fontWeight: "bold" }}>Area:</label>
+            <select
+              id="areaFilter"
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+            >
+              {deliveryAreas.map((area) => (
+                <option key={area.id} value={area.id}>
+                  {area.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="statusFilter" style={{ fontWeight: "bold" }}>Status:</label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
+            >
+              <option value="ALL">All Orders</option>
+              <option value="NEW">NEW</option>
+              <option value="PREPARING">PREPARING</option>
+              <option value="READY">READY</option>
+              <option value="COMPLETED">COMPLETED</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <p>No orders found matching the selected criteria.</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
           <thead>
             <tr style={{ backgroundColor: "#f2f2f2", textAlign: "left" }}>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Order ID</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Customer</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Area</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Notes</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Est. Time / Driver</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Current Status</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action Status</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Status</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Details</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>#{order.id}</td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  {order.customerName || order.customer?.name || "N/A"}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  {order.customerPhone || order.phone || order.customer?.phone || "-"}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  {order.address || "-"}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  {order.notes || "-"}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  {(order.totalAmount || 0).toLocaleString()} L.L.
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd", fontWeight: "bold" }}>
-                  {order.status}
-                </td>
-                <td style={{ padding: "10px", border: "1px solid #ddd" }}>
-                  <select
-                    value={order.status}
-                    disabled={updatingId === order.id}
-                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <option value="NEW">NEW</option>
-                    <option value="PREPARING">PREPARING</option>
-                    <option value="READY">READY</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                  </select>
-                </td>
-              </tr>
+            {filteredOrders.map((order) => (
+              <React.Fragment key={order.id}>
+                <tr>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>#{order.id}</td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {order.customerName || order.customer?.name || "N/A"}
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {order.customerPhone || order.phone || order.customer?.phone || "-"}
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    <span style={{
+                      padding: "4px 8px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      backgroundColor: "#f0f0f0",
+                      fontWeight: "bold"
+                    }}>
+                      {order.deliveryArea || "Default"}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {order.address || "-"}
+                  </td>
+                  {/* Driver & Estimated Time */}
+                  <td style={{ padding: "10px", border: "1px solid #ddd", fontSize: "13px" }}>
+                    <div>⏱ {order.estimatedTime || "30-45 mins"}</div>
+                    <div style={{ color: "#555", marginTop: "2px" }}>🛵 {order.driverName || "Unassigned"}</div>
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {(order.totalAmount || order.totalPrice || 0).toLocaleString()} L.L.
+                  </td>
+                  {/* Status Badge */}
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    <span style={{
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      ...getStatusBadgeStyle(order.status)
+                    }}>
+                      {order.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    <select
+                      value={order.status}
+                      disabled={updatingId === order.id}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                      style={{ padding: "5px 10px", borderRadius: "4px", cursor: "pointer" }}
+                    >
+                      <option value="NEW">NEW</option>
+                      <option value="PREPARING">PREPARING</option>
+                      <option value="READY">READY</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                  </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    <button
+                      onClick={() => toggleOrderDetails(order.id)}
+                      style={{
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        backgroundColor: "#fafafa"
+                      }}
+                    >
+                      {expandedOrders[order.id] ? "Hide Items" : "View Items"}
+                    </button>
+                  </td>
+                </tr>
+
+                {/* Expandable Items Row */}
+                {expandedOrders[order.id] && (
+                  <tr>
+                    <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
+                      <strong>Order Items:</strong>
+                      {orderDetails[order.id]?.items && orderDetails[order.id].items.length > 0 ? (
+                        <ul style={{ marginTop: "8px", marginBottom: "0" }}>
+                          {orderDetails[order.id].items.map((item, idx) => (
+                            <li key={idx}>
+                              {item.name} x {item.quantity} - {item.price.toLocaleString()} L.L.
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p style={{ margin: "5px 0 0 0", color: "#666" }}>No item details available for this order.</p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
