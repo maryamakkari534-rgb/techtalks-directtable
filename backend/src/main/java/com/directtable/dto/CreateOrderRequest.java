@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.AssertTrue;
 
 public class CreateOrderRequest{
 
@@ -18,8 +19,12 @@ public class CreateOrderRequest{
         message = "Phone number must contain 8 digits"
     )
     private String customerPhone;
-    @NotBlank(message = "Order type is required")
-    private String orderType;
+   @NotBlank(message = "Order type is required")
+@Pattern(
+    regexp = "PICKUP|DELIVERY",
+    message = "Order type must be PICKUP or DELIVERY"
+)
+private String orderType;
     private String address;
     private String notes;
 
@@ -75,4 +80,13 @@ public class CreateOrderRequest{
     public void setItems(List<CreateOrderItemRequest> items) {
     this.items = items;
     }
+    @AssertTrue(message = "Delivery address is required")
+public boolean isDeliveryAddressValid() {
+
+    if ("DELIVERY".equalsIgnoreCase(orderType)) {
+        return address != null && !address.trim().isEmpty();
+    }
+
+    return true;
+}
 }
