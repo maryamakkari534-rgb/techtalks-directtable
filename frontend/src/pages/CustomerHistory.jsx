@@ -7,6 +7,7 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState({});
+  const [reorderMessage, setReorderMessage] = useState("");
   const navigate = useNavigate();
 
   const getHistory = () => {
@@ -37,6 +38,8 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
   };
 const handleReorder = (orderId) => {
 
+  setReorderMessage("");
+
   fetch(`/api/orders/${orderId}/reorder`)
     .then((res) => {
       if (!res.ok) {
@@ -47,22 +50,53 @@ const handleReorder = (orderId) => {
     })
     .then((data) => {
 
+      let unavailableItems = [];
+
       data.items.forEach((item) => {
 
-        onAddToCart({
-          id: item.menuItemId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        });
+        if (item.available) {
+
+          onAddToCart({
+            id: item.menuItemId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          });
+
+        } else {
+
+          unavailableItems.push(item.name);
+
+        }
 
       });
 
+
+      if (unavailableItems.length > 0) {
+
+        setReorderMessage(
+          `Some items are unavailable: ${unavailableItems.join(", ")}`
+        );
+
+      } else {
+
+        setReorderMessage(
+          "Your previous order has been added to your cart successfully."
+        );
+        alert("Your previous order has been added to your cart successfully.");
+
+      }
+
+
       setShowCheckout(true);
-      navigate("/restaurant/1");    })
+      navigate("/restaurant/1");
+
+    })
     .catch((err) => {
+
       console.error(err);
-      alert("Failed to reorder");
+      setReorderMessage("Failed to reorder");
+
     });
 };
 const handleViewDetails = (orderId) => {
@@ -153,6 +187,11 @@ const handleViewDetails = (orderId) => {
             >
                 Reorder
             </button>
+            {reorderMessage && (
+  <p style={{ color: "green", marginTop: "10px" }}>
+    {reorderMessage}
+  </p>
+)}
             {selectedOrderDetails[order.id] && (
   <div>
 
