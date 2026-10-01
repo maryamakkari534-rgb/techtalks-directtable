@@ -24,6 +24,7 @@ public class MenuItem {
     private Double price;
 
     private Boolean available;
+    private String category;
 
     public Long getId() {
         return id;
@@ -65,6 +66,13 @@ public class MenuItem {
         this.available = available;
  
    }
+   public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
   // Each menu item belongs to one restaurant
 @ManyToOne
 private Restaurant restaurant;

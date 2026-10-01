@@ -4,6 +4,7 @@ import com.directtable.entity.Restaurant;
 import com.directtable.service.RestaurantService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity; // تمت إضافة هذا الاستدعاء
 
 import java.util.List;
 import com.directtable.entity.MenuItem;
@@ -25,10 +26,17 @@ public class RestaurantController {
     public List<Restaurant> getAllRestaurants() {
         return restaurantService.getAllRestaurants(); // Gets the restaurant list provided by the service
     }
-// Returns the menu for a specific restaurant by its ID
-@GetMapping("/api/restaurants/{id}/menu")
-public List<MenuItem> getRestaurantMenu(@PathVariable Long id) {
-    return restaurantService.getMenuByRestaurantId(id);
-}
 
+    // Returns the menu for a specific restaurant by its ID
+    @GetMapping("/api/restaurants/{id}/menu")
+    public List<MenuItem> getRestaurantMenu(@PathVariable Long id) {
+        return restaurantService.getMenuByRestaurantId(id);
+    }
+
+    
+    @GetMapping("/api/menu/category/{categoryName}")
+    public ResponseEntity<List<MenuItem>> getMenuByCategory(@PathVariable String categoryName) {
+        List<MenuItem> items = restaurantService.getMenuByCategory(categoryName);
+        return ResponseEntity.ok(items);
+    }
 }

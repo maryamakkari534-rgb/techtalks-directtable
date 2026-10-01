@@ -12,7 +12,12 @@ function RestaurantPage() {
       })
       .then((data) => {
         console.log("restaurants data:", data);
-        setRestaurants(data);
+        // التحقق أن البيانات عبارة عن مصفوفة لتجنب أي انهيار
+        if (Array.isArray(data)) {
+          setRestaurants(data);
+        } else {
+          setRestaurants([]);
+        }
       })
       .catch((err) => {
         console.error("restaurant fetch error:", err);
@@ -23,11 +28,11 @@ function RestaurantPage() {
     <div>
       <h1>Restaurants</h1>
 
-      {restaurants.length === 0 ? (
+      {!Array.isArray(restaurants) || restaurants.length === 0 ? (
         <p>No restaurants available</p>
       ) : (
         restaurants.map((restaurant) => (
-          <div key={restaurant.id}>
+          <div key={restaurant.id} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px' }}>
             <h2>{restaurant.name}</h2>
             <p>{restaurant.address}</p>
 
