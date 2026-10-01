@@ -142,10 +142,10 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
          }
 
         // Find the MenuItem in the database using its ID
-        MenuItem menuItem = menuItemRepository
-                .findById(itemRequest.getMenuItemId())
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
-
+       MenuItem menuItem = menuItemRepository
+    .findById(itemRequest.getMenuItemId())
+    .orElseThrow(() -> new ResourceNotFoundException("Menu item not found"));
+    
         if (!menuItem.getRestaurant().getId().equals(restaurant.getId())) {
             throw new RuntimeException(
             "Menu item does not belong to this restaurant"
