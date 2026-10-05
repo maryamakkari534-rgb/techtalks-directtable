@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./CustomerHistory.css";
 
 function CustomerHistory({ onAddToCart, setShowCheckout }) {
 
@@ -123,104 +124,201 @@ const handleViewDetails = (orderId) => {
     });
 };
 
-  return (
-    <div>
-      <h1>Customer Order History</h1>
+return (
+  <div className="history-page">
 
-      <input
-        type="text"
-        placeholder="Enter phone number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
+    <div className="history-container">
 
-      <button onClick={getHistory}>
-        View History
-      </button>
-     {orders.length > 0 && (
-    <div>
-      <h2>
-        Customer: {orders[0].customerName}
-      </h2>
+      <div className="history-header">
+        <div>
+          <h1>My Orders</h1>
+          <p>View your previous orders and reorder your favorite meals.</p>
+        </div>
+      </div>
 
-    <p>
-      Phone: {orders[0].customerPhone}
-    </p>
-    </div>
-    )}
+      <div className="history-search-card">
 
+        <label>Phone Number</label>
 
-      {loading && <p>Loading...</p>}
+        <div className="history-search-row">
 
+          <input
+            type="text"
+            placeholder="Enter phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
-      {orders.length === 0 ? (
-        <p>No orders found</p>
-      ) : (
-        orders.map((order) => (
-          <div key={order.id}>
-
-            <h3>Order #{order.id}</h3>
-
-            <p>
-              Status: {order.status}
-            </p>
-
-            <p>
-              Type: {order.orderType}
-            </p>
-
-            <p>
-               Total: {(order.totalAmount || 0).toLocaleString()} L.L.
-            </p>
-
-            <p>
-              Date: {order.createdAt}
-            </p>
-            <button
-               onClick={() => handleViewDetails(order.id)}
-            >
-               View Details
-            </button>
-
-            <button
-                onClick={() => handleReorder(order.id)}
-            >
-                Reorder
-            </button>
-            {reorderMessage && (
-  <p style={{ color: "green", marginTop: "10px" }}>
-    {reorderMessage}
-  </p>
-)}
-            {selectedOrderDetails[order.id] && (
-  <div>
-
-    <h4>Order Items:</h4>
-
-    <ul>
-      {selectedOrderDetails[order.id].items.map((item, index) => (
-        <li key={index}>
-          {item.name} x {item.quantity}
-          {" - "}
-          {item.price.toLocaleString()} L.L.
-        </li>
-        ))}
-        </ul>
-
-        <p>
-            Notes: {selectedOrderDetails[order.id].notes || "-"}
-        </p>
+          <button
+            className="history-search-btn"
+            onClick={getHistory}
+          >
+            View History
+          </button>
 
         </div>
-        )}
-            <hr />
 
-          </div>
-        ))
+      </div>
+
+      {loading && (
+        <div className="history-message">
+          Loading orders...
+        </div>
       )}
 
+      {orders.length > 0 && (
+        <div className="customer-info-card">
+
+          <div>
+            <span className="info-label">Customer</span>
+            <strong>{orders[0].customerName}</strong>
+          </div>
+
+          <div>
+            <span className="info-label">Phone</span>
+            <strong>{orders[0].customerPhone}</strong>
+          </div>
+
+        </div>
+      )}
+
+      {!loading && orders.length === 0 && (
+        <div className="history-empty">
+          <h3>No orders found</h3>
+          <p>Enter your phone number to view your previous orders.</p>
+        </div>
+      )}
+
+      <div className="orders-list">
+
+        {orders.map((order) => (
+
+          <div className="order-card" key={order.id}>
+
+            <div className="order-card-header">
+
+              <div>
+                <span className="order-label">Order</span>
+                <h2>#{order.id}</h2>
+              </div>
+
+              <span
+                className={`status-badge status-${order.status?.toLowerCase()}`}
+              >
+                {order.status}
+              </span>
+
+            </div>
+
+            <div className="order-info-grid">
+
+              <div>
+                <span className="info-label">Order Type</span>
+                <strong>{order.orderType}</strong>
+              </div>
+
+              <div>
+                <span className="info-label">Total</span>
+                <strong>
+                  {(order.totalAmount || 0).toLocaleString()} L.L.
+                </strong>
+              </div>
+
+              <div>
+                <span className="info-label">Date</span>
+                <strong>
+                  {order.createdAt}
+                </strong>
+              </div>
+
+            </div>
+
+            <div className="order-actions">
+
+              <button
+                className="details-btn"
+                onClick={() => handleViewDetails(order.id)}
+              >
+                View Details
+              </button>
+
+              <button
+                className="reorder-btn"
+                onClick={() => handleReorder(order.id)}
+              >
+                Reorder
+              </button>
+
+            </div>
+
+            {selectedOrderDetails[order.id] && (
+
+              <div className="order-details">
+
+                <h3>Order Details</h3>
+
+                <div className="details-items">
+
+                  {selectedOrderDetails[order.id].items.map(
+                    (item, index) => (
+
+                      <div className="detail-item" key={index}>
+
+                        <div>
+                          <strong>{item.name}</strong>
+
+                          <span>
+                            Quantity: {item.quantity}
+                          </span>
+                        </div>
+
+                        <strong>
+                          {item.price.toLocaleString()} L.L.
+                        </strong>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+                <div className="details-notes">
+
+                  <span>Notes</span>
+
+                  <p>
+                    {selectedOrderDetails[order.id].notes || "-"}
+                  </p>
+
+                </div>
+
+                <div className="details-total">
+
+                  <span>Total</span>
+
+                  <strong>
+                    {(selectedOrderDetails[order.id].totalAmount || 0)
+                      .toLocaleString()}{" "}
+                    L.L.
+                  </strong>
+
+                </div>
+
+              </div>
+
+            )}
+
+          </div>
+
+        ))}
+
+      </div>
+
     </div>
-  );
+
+  </div>
+);
 }
 
 export default CustomerHistory;
