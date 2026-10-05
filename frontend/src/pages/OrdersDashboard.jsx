@@ -262,7 +262,7 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Area</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Est. Time / Driver</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Notes</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Status</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
@@ -295,9 +295,8 @@ function OrdersDashboard() {
                     {order.address || "-"}
                   </td>
                   {/* Driver & Estimated Time */}
-                  <td style={{ padding: "10px", border: "1px solid #ddd", fontSize: "13px" }}>
-                    <div>⏱ {order.estimatedTime || "30-45 mins"}</div>
-                    <div style={{ color: "#555", marginTop: "2px" }}>🛵 {order.driverName || "Unassigned"}</div>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+                    {order.notes || "-"}
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {(order.totalAmount || order.totalPrice || 0).toLocaleString()} L.L.
