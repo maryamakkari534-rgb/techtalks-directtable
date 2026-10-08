@@ -9,7 +9,7 @@ const categoryKeywords = {
   'Drinks': ['drink', 'beverage', 'juice', 'coffee', 'tea', 'water', 'مشروبات', 'عصير', 'قهوة', 'شاي', 'ماء']
 };
 
-export default function MenuList() {
+export default function MenuList({ onAddToCart }) {
   const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -39,8 +39,13 @@ export default function MenuList() {
   }, [selectedCategory, allItems]);
 
   const addToCart = (item) => {
-    console.log('Added to cart:', item);
-  };
+  onAddToCart({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    quantity: 1,
+  });
+};
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
