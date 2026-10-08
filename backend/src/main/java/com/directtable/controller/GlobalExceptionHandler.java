@@ -22,10 +22,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of(
                         "status", 400,
                         "message",
-                        e.getBindingResult()
-                                .getFieldErrors()
-                                .get(0)
-                                .getDefaultMessage()
+                       e.getBindingResult()
+                       .getAllErrors()
+                       .get(0)
+                       .getDefaultMessage()
                 ));
     }
 
