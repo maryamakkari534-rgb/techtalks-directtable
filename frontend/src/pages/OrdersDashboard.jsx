@@ -8,9 +8,8 @@ function OrdersDashboard() {
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
 
-  // Filter States
+  // Filter & Search States
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [orderTypeFilter, setOrderTypeFilter] = useState("ALL");
   const [selectedArea, setSelectedArea] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -125,8 +124,6 @@ function OrdersDashboard() {
   // Combined Filter & Search logic
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
-    const matchesOrderType =
-  orderTypeFilter === "ALL" || order.orderType === orderTypeFilter;
     const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
 
     const name = (order.customerName || order.customer?.name || "").toLowerCase();
@@ -135,7 +132,7 @@ function OrdersDashboard() {
 
     const matchesSearch = query === "" || name.includes(query) || phone.includes(query);
 
-    return matchesStatus && matchesArea && matchesOrderType && matchesSearch;
+    return matchesStatus && matchesArea && matchesSearch;
   });
 
   if (loading) return <div style={{ padding: "20px" }}>Loading orders...</div>;
@@ -230,27 +227,9 @@ function OrdersDashboard() {
               <option value="COMPLETED">COMPLETED</option>
             </select>
           </div>
-{/* Order Type Filter */}
-<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-  <label htmlFor="orderTypeFilter" style={{ fontWeight: "bold" }}>
-    Type:
-  </label>
-
-  <select
-    id="orderTypeFilter"
-    value={orderTypeFilter}
-    onChange={(e) => setOrderTypeFilter(e.target.value)}
-    style={{ padding: "6px 12px", borderRadius: "4px", fontSize: "14px" }}
-  >
-    <option value="ALL">All Types</option>
-    <option value="PICKUP">PICKUP</option>
-    <option value="DELIVERY">DELIVERY</option>
-  </select>
-</div>
-
         </div>
       </div>
-      
+
       {filteredOrders.length === 0 ? (
         <p>No orders found matching the selected criteria.</p>
       ) : (

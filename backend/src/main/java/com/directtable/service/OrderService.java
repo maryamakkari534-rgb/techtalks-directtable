@@ -60,7 +60,7 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     // Find the restaurant using the restaurantId from the request
     Restaurant restaurant = restaurantRepository
             .findById(request.getRestaurantId())
-            .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
     
     // Check order type before converting to uppercase
     if (request.getOrderType() == null) {
