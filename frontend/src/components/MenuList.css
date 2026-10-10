@@ -1,0 +1,202 @@
+
+/* Customer Menu */
+
+.dt-customer-menu {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 5px 0 50px;
+}
+
+/* Menu Introduction */
+
+.dt-menu-intro {
+  text-align: center;
+  margin: 20px auto 30px;
+}
+
+.dt-menu-eyebrow {
+  color: #8dd3ad;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.dt-customer-menu .dt-menu-intro h2 {
+  color: #ffffff;
+  font-size: clamp(28px, 4vw, 40px);
+  margin: 12px 0;
+  border: none;
+}
+
+.dt-menu-intro p {
+  color: #b9bec5;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Categories */
+
+.dt-category-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 35px;
+}
+
+.dt-category-btn {
+  padding: 12px 24px;
+  border-radius: 30px;
+  background: #252a2e;
+  border: 1px solid #454b50;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dt-category-btn:hover {
+  background: #33453b;
+}
+
+.dt-category-btn.active {
+  background: #198754;
+  color: #ffffff;
+  border-color: #198754;
+}
+
+/* Menu Cards */
+
+.dt-customer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.dt-customer-card {
+  background: #ffffff;
+  border: 1px solid #e7ebe8;
+  border-radius: 18px;
+  padding: 26px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  min-height: 190px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.09);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dt-customer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+}
+
+.dt-card-top h3 {
+  color: #202a25;
+  font-size: 21px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.dt-card-top p {
+  color: #77817c;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+/* Price & Button */
+
+.dt-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.dt-customer-price {
+  color: #168455;
+  font-size: 21px;
+  font-weight: bold;
+}
+
+.dt-add-cart-btn {
+  background: #168455;
+  color: #ffffff;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dt-add-cart-btn:hover {
+  background: #116b44;
+}
+
+.dt-unavailable {
+  background: #fde8e8;
+  color: #c92e3a;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.dt-menu-feedback {
+  color: #d6ded8;
+  text-align: center;
+  padding: 30px;
+}
+
+/* Tablet */
+
+@media (max-width: 1024px) {
+  .dt-customer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Phone */
+
+@media (max-width: 600px) {
+  .dt-customer-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .dt-customer-card {
+    padding: 20px;
+    min-height: 165px;
+  }
+
+  .dt-card-top h3 {
+    font-size: 19px;
+  }
+
+  .dt-customer-price {
+    font-size: 18px;
+  }
+
+  .dt-category-list {
+    gap: 8px;
+  }
+
+  .dt-category-btn {
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+
+  .dt-add-cart-btn {
+    padding: 11px 14px;
+  }
+}
