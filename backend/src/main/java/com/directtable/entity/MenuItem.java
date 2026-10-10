@@ -25,7 +25,7 @@ public class MenuItem {
 
     private Boolean available;
     private String category;
-
+    private Boolean isDeleted = false;
     public Long getId() {
         return id;
     }
@@ -88,5 +88,12 @@ public Restaurant getRestaurant() {
 
 public void setRestaurant(Restaurant restaurant) {
     this.restaurant = restaurant;
+}
+public Boolean getIsDeleted() {
+    return isDeleted;
+}
+
+public void setIsDeleted(Boolean isDeleted) {
+    this.isDeleted = isDeleted;
 }
 }
