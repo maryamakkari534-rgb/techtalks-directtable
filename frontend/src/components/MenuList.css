@@ -200,3 +200,88 @@
     padding: 11px 14px;
   }
 }
+
+/* ===== Baby Blue Customer Menu ===== */
+
+/* Menu Introduction */
+
+.dt-menu-eyebrow {
+  color: #397D9F;
+}
+
+.dt-customer-menu .dt-menu-intro h2 {
+  color: #245B78;
+}
+
+.dt-menu-intro p {
+  color: #5D7D91;
+}
+
+/* Categories */
+
+.dt-category-btn {
+  background: #FFFFFF;
+  color: #245B78;
+  border: 1px solid #BDE7FA;
+}
+
+.dt-category-btn:hover {
+  background: #BDE7FA;
+  color: #245B78;
+}
+
+.dt-category-btn.active {
+  background: #397D9F;
+  color: #FFFFFF;
+  border-color: #397D9F;
+}
+
+/* Menu Cards */
+
+.dt-customer-card {
+  background: #FFFFFF;
+  border: 1px solid #D4EBF7;
+  box-shadow: 0 7px 24px rgba(57, 125, 159, 0.10);
+}
+
+.dt-customer-card:hover {
+  box-shadow: 0 12px 30px rgba(57, 125, 159, 0.18);
+}
+
+.dt-card-top h3 {
+  color: #245B78;
+}
+
+.dt-card-top p {
+  color: #5D7D91;
+}
+
+/* Price */
+
+.dt-customer-price {
+  color: #397D9F;
+}
+
+/* Add to Cart Button */
+
+.dt-add-cart-btn {
+  background: #397D9F;
+  color: #FFFFFF;
+}
+
+.dt-add-cart-btn:hover {
+  background: #245B78;
+}
+
+/* Unavailable Item */
+
+.dt-unavailable {
+  background: #FDE8E8;
+  color: #C92E3A;
+}
+
+/* Feedback Messages */
+
+.dt-menu-feedback {
+  color: #397D9F;
+}

@@ -401,3 +401,175 @@
     width: 100%;
   }
 }
+
+/* ===== Baby Blue Menu Management ===== */
+
+/* Main Page */
+
+.menu-management {
+  background: #EAF7FD;
+  color: #245B78;
+}
+
+/* Header */
+
+.menu-header {
+  background: linear-gradient(135deg, #89CFF0, #BDE7FA);
+  color: #245B78;
+}
+
+.menu-header h1 {
+  color: #245B78;
+}
+
+.menu-header p {
+  color: #397D9F;
+  opacity: 1;
+}
+
+/* Content */
+
+.menu-content {
+  background: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(57, 125, 159, 0.08);
+}
+
+.menu-content h2 {
+  color: #245B78;
+}
+
+/* Search */
+
+.menu-search-input {
+  border-color: #D4EBF7;
+  color: #245B78;
+}
+
+.menu-search-input:focus {
+  border-color: #89CFF0;
+  box-shadow: 0 0 0 3px rgba(137, 207, 240, 0.25);
+}
+
+/* Add & Save Buttons */
+
+.menu-add-button,
+.menu-save-button {
+  background: #397D9F;
+  color: #FFFFFF;
+}
+
+.menu-add-button:hover,
+.menu-save-button:hover {
+  background: #245B78;
+}
+
+/* Add / Edit Form */
+
+.menu-form {
+  background: #F3FAFE;
+  border-color: #D4EBF7;
+}
+
+.menu-form h3 {
+  color: #245B78;
+}
+
+.menu-field {
+  color: #245B78;
+}
+
+.menu-field input,
+.menu-field textarea {
+  border-color: #D4EBF7;
+  color: #245B78;
+}
+
+.menu-field input:focus,
+.menu-field textarea:focus {
+  border-color: #89CFF0;
+}
+
+.menu-checkbox {
+  color: #245B78;
+}
+
+.menu-checkbox input {
+  accent-color: #397D9F;
+}
+
+.menu-cancel-button {
+  background: #EAF7FD;
+  color: #245B78;
+}
+
+.menu-cancel-button:hover {
+  background: #BDE7FA;
+}
+
+/* Menu Cards */
+
+.menu-item-card {
+  background: #FFFFFF;
+  border-color: #D4EBF7;
+  color: #245B78;
+  box-shadow: 0 4px 12px rgba(57, 125, 159, 0.08);
+}
+
+.menu-item-card:hover {
+  box-shadow: 0 8px 22px rgba(57, 125, 159, 0.16);
+}
+
+.menu-item-card h3 {
+  color: #245B78;
+}
+
+.menu-item-description,
+.menu-item-category {
+  color: #5D7D91;
+}
+
+.menu-item-price {
+  color: #397D9F;
+}
+
+/* Availability Status */
+
+.menu-status.available {
+  background: #EAF7FD;
+  color: #245B78;
+}
+
+/* Edit Button */
+
+.menu-edit-button {
+  background: #EAF7FD;
+  color: #245B78;
+  border-color: #BDE7FA;
+}
+
+.menu-edit-button:hover {
+  background: #BDE7FA;
+}
+
+/* Availability Button */
+
+.menu-availability-button {
+  background: #F3FAFE;
+  color: #245B78;
+  border-color: #D4EBF7;
+}
+
+.menu-availability-button:hover {
+  background: #BDE7FA;
+}
+
+/* Success & Feedback */
+
+.menu-success {
+  background: #E5F5EC;
+  color: #176B48;
+}
+
+.menu-message {
+  color: #5D7D91;
+}

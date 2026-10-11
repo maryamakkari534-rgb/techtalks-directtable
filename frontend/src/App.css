@@ -1,124 +1,22 @@
-body {
-  background-color: #f8f9fa;
-  margin: 0;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+
+/* DirectTable Baby Blue Theme */
+
+:root {
+  --primary: #89CFF0;
+  --primary-light: #BDE7FA;
+  --primary-dark: #397D9F;
+  --background: #EAF7FD;
+  --text-primary: #245B78;
+  --text-secondary: #5D7D91;
+  --border-color: #D4EBF7;
 }
 
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
+/* Main Background */
 
-h1 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 30px;
-}
-
-h2 {
-  border-bottom: 2px solid #eef2f5;
-  padding-bottom: 10px;
-  color: #34495e;
-}
-
-.menu-list {
-  display: grid;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  border: 1px solid #e1e8ed;
-  border-radius: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.menu-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.item-details h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.1rem;
-}
-
-.item-details p {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.price {
-  font-weight: bold;
-  color: #27ae60;
-}
-
-button {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #2980b9;
-}
-
-.checkout-section {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px dashed #e1e8ed;
-}
-
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.order-form {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.order-form input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.place-order-btn {
-  background-color: #27ae60;
-  font-size: 1rem;
-  padding: 12px;
-}
-
-.place-order-btn:hover {
-  background-color: #219150;
-}
 body {
   margin: 0;
   padding: 0;
-  background: #15161d;
+  background: var(--background);
 }
 
 .dt-app {
@@ -144,13 +42,15 @@ body {
 
   background: linear-gradient(
     135deg,
-    #184f39,
-    #15754f
+    #89CFF0,
+    #BDE7FA
   );
 
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(57, 125, 159, 0.15);
 }
+
+/* Restaurant Name */
 
 .dt-brand {
   flex: 1;
@@ -158,7 +58,7 @@ body {
 }
 
 .dt-brand-label {
-  color: #c5e9d4;
+  color: #397D9F;
   font-size: 11px;
   font-weight: bold;
   letter-spacing: 3px;
@@ -166,7 +66,7 @@ body {
 
 .dt-site-header .dt-brand h1 {
   margin: 10px 0;
-  color: #ffffff;
+  color: #245B78;
   font-size: clamp(30px, 4vw, 50px);
   text-align: left;
   line-height: 1.15;
@@ -174,10 +74,12 @@ body {
 }
 
 .dt-brand p {
-  color: #e0f0e7;
+  color: #397D9F;
   font-size: 15px;
   margin: 0;
 }
+
+/* Customer Header Buttons */
 
 .dt-header-actions {
   display: flex;
@@ -195,31 +97,74 @@ body {
   padding: 13px 20px;
   border-radius: 12px;
 
+  background: #FFFFFF;
+  color: #245B78;
+  border: 1px solid #D4EBF7;
+
   font-size: 15px;
   font-weight: bold;
   text-decoration: none;
   cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
-.dt-history-link {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-}
-
-.dt-cart-button {
-  background: #ffffff;
-  color: #176b48;
-  border: 1px solid #ffffff;
-}
-
-.dt-history-link:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
+.dt-history-link:hover,
 .dt-cart-button:hover {
-  background: #e6f4eb;
-  color: #176b48;
+  background: #EAF7FD;
+  color: #245B78;
+}
+
+/* Dashboard Navigation */
+
+.dt-dashboard-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dt-dashboard-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 13px 20px;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid #FFFFFF;
+
+  color: #245B78;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+
+  transition: all 0.2s ease;
+}
+
+.dt-dashboard-link:hover {
+  background: #FFFFFF;
+  color: #245B78;
+}
+
+.dt-dashboard-link.active {
+  background: #245B78;
+  color: #FFFFFF;
+  border-color: #245B78;
+  box-shadow: 0 4px 12px rgba(36, 91, 120, 0.15);
+}
+
+/* Tablet */
+
+@media (max-width: 768px) {
+  .dt-site-header {
+    padding: 25px 20px;
+  }
+
+  .dt-site-header .dt-brand h1 {
+    font-size: 36px;
+  }
 }
 
 /* Phone */
@@ -258,50 +203,7 @@ body {
     padding: 12px 8px;
     font-size: 13px;
   }
-}
 
-/* Dashboard Navigation */
-
-.dt-dashboard-nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.dt-dashboard-link {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 13px 20px;
-  border-radius: 12px;
-
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-
-  color: white;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: bold;
-
-  transition: all 0.2s ease;
-}
-
-.dt-dashboard-link:hover {
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-}
-
-.dt-dashboard-link.active {
-  background: white;
-  color: #176b48;
-  border-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-/* Phone */
-@media (max-width: 600px) {
   .dt-dashboard-nav {
     width: 100%;
     display: grid;
