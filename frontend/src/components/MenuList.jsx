@@ -46,7 +46,7 @@ export default function MenuList() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h2 style={{ textAlign: 'center', color: '#333', fontSize: '2rem', marginBottom: '20px' }}>Our Menu</h2>
-
+      
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
         {categories.map((cat) => (
           <button
@@ -100,7 +100,7 @@ export default function MenuList() {
                   {item.description}
                 </p>
               </div>
-
+              
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                 <span style={{ fontWeight: 'bold', color: '#198754', fontSize: '1.1rem' }}>
                   {item.price.toLocaleString()} L.L.
