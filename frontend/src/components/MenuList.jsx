@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// الكلمات المفتاحية للتصنيفات (نفس المنطق الناجح السابق)
+// نقل الكلمات المفتاحية للخارج لمنع إعادة إنشائها مع كل رندر وتصفير أي تحذيرات
 const categoryKeywords = {
   'All': [],
   'Pasta': ['pasta', 'باستا'],
@@ -9,12 +9,14 @@ const categoryKeywords = {
   'Drinks': ['drink', 'beverage', 'juice', 'coffee', 'tea', 'water', 'مشروبات', 'عصير', 'قهوة', 'شاي', 'ماء']
 };
 
+// لاحظي هنا: أعدنا onAddToCart لكي لا نخرب وظيفة السلة في المشروع
 export default function MenuList({ onAddToCart }) {
   const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const categories = ['All', 'Pasta', 'Crepe', 'Desserts', 'Drinks'];
 
+  // جلب أصناف القائمة من الباك إند
   useEffect(() => {
     fetch('/api/restaurants/1/menu')
       .then((res) => res.json())
@@ -25,6 +27,7 @@ export default function MenuList({ onAddToCart }) {
       .catch((error) => console.error('Error fetching menu items:', error));
   }, []);
 
+  // فلترة الأصناف محلياً
   useEffect(() => {
     if (selectedCategory === 'All') {
       setItems(allItems);
@@ -39,26 +42,23 @@ export default function MenuList({ onAddToCart }) {
   }, [selectedCategory, allItems]);
 
   const addToCart = (item) => {
-  onAddToCart({
-    id: item.id,
-    name: item.name,
-    price: item.price,
-    quantity: 1,
-  });
-};
+    if (item.available) {
+      // هنا استعدنا الكود الخاص بزميلك لربط السلة، مع الاحتفاظ بشرط توفر الصنف الخاص بكِ
+      onAddToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1
+      });
+    }
+  };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h2 style={{ textAlign: 'center', color: '#333', fontSize: '2rem', marginBottom: '20px' }}>Our Menu</h2>
       
-      {/* تحسين أزرار التصنيفات لتناسب الهواتف (DT-43) */}
-      <div style={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        justifyContent: 'center', 
-        gap: '10px', 
-        marginBottom: '30px' 
-      }}>
+      {/* أزرار التصنيفات (نفس تصميمك تماماً) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
         {categories.map((cat) => (
           <button
             key={cat}
@@ -81,12 +81,8 @@ export default function MenuList({ onAddToCart }) {
         ))}
       </div>
 
-      {/* جعل شبكة القائمة متجاوبة مع كل الشاشات (DT-43) */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-        gap: '20px' 
-      }}>
+      {/* بطاقات القائمة وعرض السعر والتوفر (نفس تصميمك تماماً) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
         {items.length === 0 ? (
           <p style={{ textAlign: 'center', width: '100%', color: '#6c757d' }}>No items available in this category.</p>
         ) : (
@@ -100,10 +96,20 @@ export default function MenuList({ onAddToCart }) {
               flexDirection: 'column',
               justifyContent: 'space-between',
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              transition: 'transform 0.2s'
+              transition: 'transform 0.2s',
+              // اللوجيك الخاص بكِ لا زال موجوداً هنا!
+              opacity: item.available ? 1 : 0.6 
             }}>
               <div>
-                <h3 style={{ margin: '0 0 10px 0', color: '#212529', fontSize: '1.25rem' }}>{item.name}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#212529', fontSize: '1.25rem' }}>{item.name}</h3>
+                  {/* اللوجيك الخاص بكِ لا زال موجوداً هنا! */}
+                  {!item.available && (
+                    <span style={{ backgroundColor: '#ffe5e5', color: '#dc3545', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                      Not Available
+                    </span>
+                  )}
+                </div>
                 <p style={{ margin: '0 0 15px 0', color: '#6c757d', fontSize: '0.95rem', lineHeight: '1.5' }}>
                   {item.description}
                 </p>
@@ -114,34 +120,23 @@ export default function MenuList({ onAddToCart }) {
                   {item.price.toLocaleString()} L.L.
                 </span>
 
-                {item.available ? (
-                  <button 
-                    onClick={() => addToCart(item)}
-                    style={{ 
-                      backgroundColor: '#198754', 
-                      color: '#fff', 
-                      padding: '8px 16px', 
-                      border: 'none', 
-                      borderRadius: '8px', 
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      boxShadow: '0 2px 4px rgba(25, 135, 84, 0.2)'
-                    }}
-                  >
-                    Add to Cart
-                  </button>
-                ) : (
-                  <span style={{ 
-                    backgroundColor: '#ffe5e5', 
-                    color: '#dc3545', 
-                    padding: '6px 12px', 
+                {/* اللوجيك الخاص بكِ لا زال موجوداً هنا! */}
+                <button 
+                  onClick={() => addToCart(item)}
+                  disabled={!item.available}
+                  style={{ 
+                    backgroundColor: item.available ? '#198754' : '#e9ecef', 
+                    color: item.available ? '#fff' : '#6c757d', 
+                    padding: '8px 16px', 
+                    border: 'none', 
                     borderRadius: '8px', 
+                    cursor: item.available ? 'pointer' : 'not-allowed',
                     fontWeight: 'bold',
-                    fontSize: '0.9rem' 
-                  }}>
-                    Unavailable
-                  </span>
-                )}
+                    boxShadow: item.available ? '0 2px 4px rgba(25, 135, 84, 0.2)' : 'none'
+                  }}
+                >
+                  Add to Cart
+                </button>
               </div>
             </div>
           ))

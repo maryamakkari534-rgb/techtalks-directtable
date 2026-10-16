@@ -1,365 +1,444 @@
+
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-function Checkout({ cartItems, onOrderSuccess }) {
-  const { id } = useParams();
+const deliveryAreas = [
+  { value: "TRIPOLI", label: "Tripoli Center" },
+  { value: "MINA", label: "El Mina" },
+  { value: "ABU_SAMRA", label: "Abu Samra" },
+  { value: "QOBBEH", label: "Qobbeh" },
+  { value: "DAM_W_FAREZ", label: "Dam w Farez" },
+  { value: "TALL", label: "Al Tall" },
+  { value: "ZAHRIYEH", label: "Zahriyeh" },
+  { value: "BAB_EL_TABBANEH", label: "Bab El Tabbaneh" },
+  { value: "BAHSAAS", label: "Bahsaas" }
+];
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [orderType, setOrderType] = useState("PICKUP");
+function Checkout({
+  cartItems = [],
+  onUpdateQuantity,
+  onRemoveItem,
+  onClearCart
+}) {
+  const navigate = useNavigate();
 
-  const [city, setCity] = useState("");
-  const [area, setArea] = useState("");
-  const [address, setAddress] = useState("");
+  const [formData, setFormData] = useState({
+    customerName: "",
+    customerPhone: "",
+    orderType: "DELIVERY",
+    deliveryArea: "TRIPOLI",
+    address: "",
+    notes: ""
+  });
 
-  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Delivery areas
-  const deliveryAreas = {
-    Tripoli: [
-      "Mina",
-      "Qobbeh",
-      "Abi Samra",
-      "Zahriyeh",
-      "Tebbaneh",
-    ],
-    "Al-Mina": [
-      "Main Mina",
-      "Corniche",
-      "Port Area",
-    ],
+  const isDelivery = formData.orderType === "DELIVERY";
+
+  const calculateTotal = () => {
+    return cartItems.reduce(
+      (total, item) =>
+        total + Number(item.price || 0) * Number(item.quantity || 1),
+      0
+    );
   };
 
-  const totalAmount = cartItems.reduce(
-    (sum, item) => sum + item.price * (item.quantity || 1),
-    0
-  );
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  const handleOrderTypeChange = (e) => {
-    const type = e.target.value;
-
-    setOrderType(type);
-
-    // Clear delivery information when Pickup is selected
-    if (type === "PICKUP") {
-      setCity("");
-      setArea("");
-      setAddress("");
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    if (cartItems.length === 0) {
-      alert("Your order list is empty!");
+    if (!formData.customerName.trim()) {
+      setErrorMessage("Please enter your name.");
       return;
     }
 
-    // Delivery validation
-    if (orderType === "DELIVERY") {
-      if (!city) {
-        alert("Please select a city.");
-        return;
-      }
-
-      if (!area) {
-        alert("Please select a delivery area.");
-        return;
-      }
-
-      if (!address.trim()) {
-        alert("Please enter your additional address.");
-        return;
-      }
+    if (!/^[0-9]{8}$/.test(formData.customerPhone.trim())) {
+      setErrorMessage("Phone number must contain 8 digits.");
+      return;
     }
+
+    if (isDelivery && !formData.address.trim()) {
+      setErrorMessage("Please enter your delivery address.");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty.");
+      return;
+    }
+
+    const selectedArea = deliveryAreas.find(
+      (area) => area.value === formData.deliveryArea
+    );
+
+    // Save the selected area together with the address.
+    // The current backend does not have a deliveryArea field.
+    const fullAddress = isDelivery
+      ? `${selectedArea?.label || "Tripoli"} - ${formData.address.trim()}`
+      : "";
+
+    const orderPayload = {
+      restaurantId: Number(cartItems[0]?.restaurantId || 1),
+      customerName: formData.customerName.trim(),
+      customerPhone: formData.customerPhone.trim(),
+      orderType: formData.orderType,
+      address: fullAddress,
+      notes: formData.notes.trim(),
+      items: cartItems.map((item) => ({
+        menuItemId: item.id,
+        quantity: Number(item.quantity || 1)
+      }))
+    };
 
     setSubmitting(true);
 
-    // Combine delivery information into the existing address field
-    const fullAddress =
-      orderType === "DELIVERY"
-        ? `${city} - ${area} - ${address}`
-        : "";
-
-    const orderData = {
-      restaurantId: Number(id),
-      customerName,
-      customerPhone,
-      orderType,
-      address: fullAddress,
-      notes,
-
-      items: cartItems.map((item) => ({
-        menuItemId: item.id || item.menuItemId,
-        quantity: item.quantity || 1,
-      })),
-    };
-
-    fetch("/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderData),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.text().then((message) => {
-            throw new Error(message || "Failed to place order");
-          });
-        }
-
-        return res.text();
-      })
-      .then(() => {
-        alert("Order placed successfully!");
-        setSubmitting(false);
-
-        if (onOrderSuccess) {
-          onOrderSuccess();
-        }
-      })
-      .catch((err) => {
-        console.error("Error placing order:", err);
-        alert("Error placing order: " + err.message);
-        setSubmitting(false);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(orderPayload)
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to place order. Please check your details.");
+      }
+
+      alert("Order placed successfully!");
+
+      if (onClearCart) {
+        onClearCart();
+      }
+
+      navigate("/");
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <div
+        style={{
+          padding: "40px",
+          textAlign: "center",
+          fontFamily: "Arial, sans-serif"
+        }}
+      >
+        <h2>Cart & Checkout</h2>
+        <p>Your cart is currently empty.</p>
+      </div>
+    );
+  }
+
+  const inputStyle = {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #BDE7FA",
+    boxSizing: "border-box",
+    fontSize: "14px"
   };
 
   return (
     <div
-      className="checkout-page"
       style={{
-        maxWidth: "800px",
+        padding: "25px",
+        maxWidth: "750px",
         margin: "0 auto",
-        padding: "20px",
+        fontFamily: "Arial, sans-serif",
+        color: "#245B78"
       }}
     >
+      <h2 style={{ textAlign: "center" }}>
+        Cart & Checkout
+      </h2>
+
+      {/* Cart Items */}
+
       <div
-        className="checkout-card"
         style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "16px",
-          padding: "30px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          background: "#FFFFFF",
+          padding: "20px",
+          border: "1px solid #BDE7FA",
+          borderRadius: "14px",
+          marginBottom: "25px",
+          overflowX: "auto"
         }}
       >
-        <h2
+        <h3>Your Selected Items</h3>
+
+        <table
           style={{
-            textAlign: "center",
-            marginBottom: "25px",
+            width: "100%",
+            borderCollapse: "collapse"
           }}
         >
-          Checkout
-        </h2>
+          <thead>
+            <tr>
+              <th style={{ padding: "10px", textAlign: "left" }}>
+                Item
+              </th>
+              <th style={{ padding: "10px" }}>Price</th>
+              <th style={{ padding: "10px" }}>Qty</th>
+              <th style={{ padding: "10px" }}>Subtotal</th>
+              <th style={{ padding: "10px" }}>Action</th>
+            </tr>
+          </thead>
 
-        {/* Order Summary */}
-        <div style={{ marginBottom: "25px" }}>
-          <h3>Your Order</h3>
+          <tbody>
+            {cartItems.map((item) => (
+              <tr
+                key={item.id}
+                style={{
+                  borderTop: "1px solid #D4EBF7"
+                }}
+              >
+                <td style={{ padding: "10px" }}>
+                  {item.name}
+                </td>
 
-          {cartItems.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px",
-                marginBottom: "8px",
-                backgroundColor: "#f7f7f7",
-                borderRadius: "10px",
-              }}
-            >
-              <div>
-                <strong>{item.name}</strong>
-                <div style={{ fontSize: "14px", color: "#666" }}>
-                  Quantity: {item.quantity || 1}
-                </div>
-              </div>
+                <td style={{ padding: "10px" }}>
+                  {Number(item.price || 0).toLocaleString()} L.L.
+                </td>
 
-              <strong>
-                {(
-                  item.price * (item.quantity || 1)
-                ).toLocaleString()}{" "}
-                L.L.
-              </strong>
-            </div>
-          ))}
+                <td style={{ padding: "10px", whiteSpace: "nowrap" }}>
+                  <button
+                    type="button"
+                    disabled={item.quantity <= 1}
+                    onClick={() =>
+                      onUpdateQuantity?.(
+                        item.id,
+                        item.quantity - 1
+                      )
+                    }
+                  >
+                    −
+                  </button>
 
-          <div
+                  <span style={{ margin: "0 10px" }}>
+                    {item.quantity}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateQuantity?.(
+                        item.id,
+                        item.quantity + 1
+                      )
+                    }
+                  >
+                    +
+                  </button>
+                </td>
+
+                <td style={{ padding: "10px" }}>
+                  {(
+                    Number(item.price || 0) *
+                    Number(item.quantity || 1)
+                  ).toLocaleString()} L.L.
+                </td>
+
+                <td style={{ padding: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveItem?.(item.id)}
+                    style={{
+                      background: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3 style={{ textAlign: "right" }}>
+          Total: {calculateTotal().toLocaleString()} L.L.
+        </h3>
+      </div>
+
+      {/* Checkout Form */}
+
+      <div
+        style={{
+          background: "#FFFFFF",
+          padding: "25px",
+          borderRadius: "14px",
+          border: "1px solid #BDE7FA"
+        }}
+      >
+        <h3>Order Details</h3>
+
+        {errorMessage && (
+          <p
             style={{
-              textAlign: "right",
-              fontSize: "18px",
-              fontWeight: "bold",
-              marginTop: "15px",
+              color: "#b42332",
+              background: "#fde8e8",
+              padding: "12px",
+              borderRadius: "8px"
             }}
           >
-            Total: {totalAmount.toLocaleString()} L.L.
-          </div>
-        </div>
+            {errorMessage}
+          </p>
+        )}
 
-        <form onSubmit={handleSubmit}>
-
-          {/* Customer Information */}
-          <div style={{ marginBottom: "20px" }}>
-            <h3>Your Information</h3>
-
-            <input
-              type="text"
-              placeholder="Your Name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              required
-              style={inputStyle}
-            />
-
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              required
-              style={inputStyle}
-            />
-          </div>
-
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px"
+          }}
+        >
           {/* Order Type */}
-          <div style={{ marginBottom: "20px" }}>
-            <h3>Order Type</h3>
+
+          <div>
+            <label>Order Type *</label>
 
             <select
-              value={orderType}
-              onChange={handleOrderTypeChange}
+              name="orderType"
+              value={formData.orderType}
+              onChange={handleChange}
               style={inputStyle}
             >
-              <option value="PICKUP">Pickup</option>
               <option value="DELIVERY">Delivery</option>
+              <option value="PICKUP">Pickup</option>
             </select>
           </div>
 
-          {/* Delivery Information */}
-          {orderType === "DELIVERY" && (
-            <div
-              style={{
-                marginBottom: "20px",
-                padding: "20px",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "12px",
-              }}
-            >
-              <h3>Delivery Information</h3>
+          {/* Customer Name */}
 
-              <label style={labelStyle}>City</label>
+          <div>
+            <label>Full Name *</label>
 
-              <select
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  setArea("");
-                }}
-                required
-                style={inputStyle}
-              >
-                <option value="">Select City</option>
+            <input
+              type="text"
+              name="customerName"
+              value={formData.customerName}
+              onChange={handleChange}
+              required
+              style={inputStyle}
+            />
+          </div>
 
-                {Object.keys(deliveryAreas).map((cityName) => (
-                  <option key={cityName} value={cityName}>
-                    {cityName}
-                  </option>
-                ))}
-              </select>
+          {/* Phone Number */}
 
-              <label style={labelStyle}>Area</label>
+          <div>
+            <label>Phone Number *</label>
 
-              <select
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                required
-                disabled={!city}
-                style={inputStyle}
-              >
-                <option value="">
-                  {city ? "Select Area" : "Select City First"}
-                </option>
+            <input
+              type="tel"
+              name="customerPhone"
+              value={formData.customerPhone}
+              onChange={handleChange}
+              maxLength={8}
+              placeholder="8 digits"
+              required
+              style={inputStyle}
+            />
+          </div>
 
-                {city &&
-                  deliveryAreas[city].map((areaName) => (
-                    <option key={areaName} value={areaName}>
-                      {areaName}
+          {/* Delivery Fields */}
+
+          {isDelivery && (
+            <>
+              <div>
+                <label>Delivery Area *</label>
+
+                <select
+                  name="deliveryArea"
+                  value={formData.deliveryArea}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  {deliveryAreas.map((area) => (
+                    <option
+                      key={area.value}
+                      value={area.value}
+                    >
+                      {area.label}
                     </option>
                   ))}
-              </select>
+                </select>
+              </div>
 
-              <label style={labelStyle}>
-                Additional Address
-              </label>
+              <div>
+                <label>Address *</label>
 
-              <input
-                type="text"
-                placeholder="Building, street, landmark..."
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
-                style={inputStyle}
-              />
-            </div>
+                <textarea
+                  name="address"
+                  rows={3}
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Street, building, floor..."
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            </>
           )}
 
           {/* Notes */}
-          <textarea
-            placeholder="Notes / Special Instructions"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            style={{
-              ...inputStyle,
-              minHeight: "100px",
-              resize: "vertical",
-            }}
-          />
+
+          <div>
+            <label>Notes (Optional)</label>
+
+            <textarea
+              name="notes"
+              rows={2}
+              value={formData.notes}
+              onChange={handleChange}
+              placeholder="Any special instructions..."
+              style={inputStyle}
+            />
+          </div>
 
           {/* Submit */}
+
           <button
             type="submit"
             disabled={submitting}
             style={{
-              width: "100%",
+              background: submitting ? "#AABBC5" : "#397D9F",
+              color: "#FFFFFF",
               padding: "14px",
-              marginTop: "15px",
               border: "none",
               borderRadius: "10px",
-              backgroundColor: "#111827",
-              color: "#ffffff",
-              fontSize: "16px",
               fontWeight: "bold",
-              cursor: submitting ? "not-allowed" : "pointer",
+              fontSize: "16px",
+              cursor: submitting ? "not-allowed" : "pointer"
             }}
           >
-            {submitting ? "Submitting..." : "Place Order"}
+            {submitting
+              ? "Placing Order..."
+              : "Confirm & Place Order"}
           </button>
-
         </form>
       </div>
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginBottom: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "8px",
-  fontSize: "15px",
-  boxSizing: "border-box",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "6px",
-  fontWeight: "bold",
-  fontSize: "14px",
-};
 
 export default Checkout;
