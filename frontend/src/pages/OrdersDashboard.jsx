@@ -18,12 +18,19 @@ function OrdersDashboard() {
   const [orderDetails, setOrderDetails] = useState({});
 
   // Delivery Areas List
-  const deliveryAreas = [
-    { id: "ALL", name: "All Areas" },
-    { id: "BEIRUT", name: "Beirut Central" },
-    { id: "HAZMIEH", name: "Hazmieh & Surroundings" },
-    { id: "JABAL", name: "Metn / Mount Lebanon" },
-  ];
+
+const deliveryAreas = [
+  { id: "ALL", name: "All Areas" },
+  { id: "TRIPOLI", name: "Tripoli Center" },
+  { id: "MINA", name: "El Mina" },
+  { id: "ABU_SAMRA", name: "Abu Samra" },
+  { id: "QOBBEH", name: "Qobbeh" },
+  { id: "DAM_W_FAREZ", name: "Dam w Farez" },
+  { id: "TALL", name: "Al Tall" },
+  { id: "ZAHRIYEH", name: "Zahriyeh" },
+  { id: "BAB_EL_TABBANEH", name: "Bab El Tabbaneh" },
+  { id: "BAHSAAS", name: "Bahsaas" }
+];
 
   // Fetch orders from backend
   const fetchOrders = async (showRefreshLoader = false) => {
@@ -124,7 +131,16 @@ function OrdersDashboard() {
   // Combined Filter & Search logic
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
-    const matchesArea = selectedArea === "ALL" || order.deliveryArea === selectedArea;
+
+const areaName = deliveryAreas.find(
+  (area) => area.id === selectedArea
+)?.name;
+
+const matchesArea =
+  selectedArea === "ALL" ||
+  order.deliveryArea === selectedArea ||
+  (areaName && order.address?.startsWith(`${areaName} - `));
+
 
     const name = (order.customerName || order.customer?.name || "").toLowerCase();
     const phone = (order.customerPhone || order.phone || order.customer?.phone || "").toLowerCase();
@@ -142,7 +158,7 @@ function OrdersDashboard() {
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
         <h2>Orders & Delivery Management</h2>
-        
+
         {/* Refresh Button */}
         <button
           onClick={() => fetchOrders(true)}
@@ -241,7 +257,9 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Phone</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Area</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Address</th>
-              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Est. Time / Driver</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>
+  Customer Notes
+</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Total</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Status</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
@@ -267,17 +285,35 @@ function OrdersDashboard() {
                       backgroundColor: "#f0f0f0",
                       fontWeight: "bold"
                     }}>
-                      {order.deliveryArea || "Default"}
+
+{order.orderType === "PICKUP"
+  ? "Pickup"
+  : deliveryAreas.find(
+      (area) =>
+        area.id !== "ALL" &&
+        order.address?.startsWith(`${area.name} - `)
+    )?.name || order.deliveryArea || "Unknown"}
+
                     </span>
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {order.address || "-"}
                   </td>
-                  {/* Driver & Estimated Time */}
-                  <td style={{ padding: "10px", border: "1px solid #ddd", fontSize: "13px" }}>
-                    <div>⏱ {order.estimatedTime || "30-45 mins"}</div>
-                    <div style={{ color: "#555", marginTop: "2px" }}>🛵 {order.driverName || "Unassigned"}</div>
-                  </td>
+
+{/* Customer Notes */}
+<td
+  style={{
+    padding: "10px",
+    border: "1px solid #ddd",
+    fontSize: "14px",
+    color: "#245B78",
+    maxWidth: "220px",
+    overflowWrap: "anywhere"
+  }}
+>
+  {order.notes?.trim() || "No notes"}
+</td>
+
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     {(order.totalAmount || order.totalPrice || 0).toLocaleString()} L.L.
                   </td>
