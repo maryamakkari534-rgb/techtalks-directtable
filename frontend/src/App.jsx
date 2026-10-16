@@ -24,14 +24,69 @@ function AppContent() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith("/dashboard");
 
+  // Add item to cart
   const handleAddToCart = (item) => {
-    setCartItems((previous) => [...previous, item]);
+    const quantityToAdd = Math.max(1, Number(item.quantity) || 1);
+
+    setCartItems((previous) => {
+      const existingItem = previous.find(
+        (cartItem) => cartItem.id === item.id
+      );
+
+      if (existingItem) {
+        return previous.map((cartItem) =>
+          cartItem.id === item.id
+            ? {
+                ...cartItem,
+                quantity: cartItem.quantity + quantityToAdd
+              }
+            : cartItem
+        );
+      }
+
+      return [
+        ...previous,
+        {
+          ...item,
+          quantity: quantityToAdd
+        }
+      ];
+    });
   };
 
-  const handleOrderSuccess = () => {
+  // Update quantity (+ / -)
+  const handleUpdateQuantity = (itemId, newQuantity) => {
+    if (newQuantity < 1) {
+      return;
+    }
+
+    setCartItems((previous) =>
+      previous.map((item) =>
+        item.id === itemId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  // Remove item from cart
+  const handleRemoveItem = (itemId) => {
+    setCartItems((previous) =>
+      previous.filter((item) => item.id !== itemId)
+    );
+  };
+
+  // Clear cart after successful order
+  const handleClearCart = () => {
     setCartItems([]);
     setShowCheckout(false);
   };
+
+  // Total number of items
+  const cartCount = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
 
   return (
     <div className="dt-app">
@@ -47,34 +102,33 @@ function AppContent() {
           <p>Fresh flavors, sweet moments.</p>
         </div>
 
-{isDashboard && (
-  <nav className="dt-dashboard-nav">
+        {isDashboard && (
+          <nav className="dt-dashboard-nav">
 
-    <NavLink
-      to="/dashboard/orders"
-      className={({ isActive }) =>
-        isActive
-          ? "dt-dashboard-link active"
-          : "dt-dashboard-link"
-      }
-    >
-      Orders Management
-    </NavLink>
+            <NavLink
+              to="/dashboard/orders"
+              className={({ isActive }) =>
+                isActive
+                  ? "dt-dashboard-link active"
+                  : "dt-dashboard-link"
+              }
+            >
+              Orders Management
+            </NavLink>
 
-    <NavLink
-      to="/dashboard/menu"
-      className={({ isActive }) =>
-        isActive
-          ? "dt-dashboard-link active"
-          : "dt-dashboard-link"
-      }
-    >
-      Menu Management
-    </NavLink>
+            <NavLink
+              to="/dashboard/menu"
+              className={({ isActive }) =>
+                isActive
+                  ? "dt-dashboard-link active"
+                  : "dt-dashboard-link"
+              }
+            >
+              Menu Management
+            </NavLink>
 
-  </nav>
-)}
-
+          </nav>
+        )}
 
         {!isDashboard && (
           <nav className="dt-header-actions">
@@ -96,12 +150,12 @@ function AppContent() {
                   return;
                 }
 
-                setShowCheckout(!showCheckout);
+                setShowCheckout((previous) => !previous);
               }}
             >
               {showCheckout
                 ? "العودة للقائمة"
-                : `السلة (${cartItems.length})`}
+                : `السلة (${cartCount})`}
             </button>
 
           </nav>
@@ -121,7 +175,9 @@ function AppContent() {
             showCheckout ? (
               <Checkout
                 cartItems={cartItems}
-                onOrderSuccess={handleOrderSuccess}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemoveItem={handleRemoveItem}
+                onClearCart={handleClearCart}
               />
             ) : (
               <MenuList
