@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
-
+import org.springframework.web.server.ResponseStatusException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -42,6 +42,20 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+
+@ExceptionHandler(ResponseStatusException.class)
+public ResponseEntity<Map<String, Object>> handleResponseStatus(
+        ResponseStatusException e) {
+
+    return ResponseEntity
+            .status(e.getStatusCode())
+            .body(Map.of(
+                    "status", e.getStatusCode().value(),
+                    "message", e.getReason() != null
+                            ? e.getReason()
+                            : "Request failed"
+            ));
+}
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeErrors(

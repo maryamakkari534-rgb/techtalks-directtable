@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 @Configuration
 public class SecurityConfig {
@@ -28,10 +30,75 @@ public class SecurityConfig {
     .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
 )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll()
-                .anyRequest().permitAll()
-            )
+
+.authorizeHttpRequests(auth -> auth
+
+    // Authentication
+    .requestMatchers(
+        "/api/auth/login",
+        "/api/auth/csrf"
+    ).permitAll()
+
+    .requestMatchers("/api/auth/me")
+    .authenticated()
+    .requestMatchers(
+    HttpMethod.POST,
+    "/api/customer/auth/signup"
+).permitAll()
+
+    // Public Restaurant APIs
+    .requestMatchers(
+        HttpMethod.GET,
+        "/restaurants",
+        "/api/restaurants/*/menu",
+        "/api/menu/category/*"
+    ).permitAll()
+
+    .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
+
+    // Admin Menu Management
+    .requestMatchers(
+        HttpMethod.POST,
+        "/api/restaurants/*/menu"
+    ).hasRole("ADMIN")
+
+    .requestMatchers(
+        HttpMethod.PUT,
+        "/api/restaurants/*/menu/*"
+    ).hasRole("ADMIN")
+
+    .requestMatchers(
+        HttpMethod.DELETE,
+        "/api/restaurants/*/menu/*"
+    ).hasRole("ADMIN")
+
+    .requestMatchers(
+        HttpMethod.PATCH,
+        "/api/restaurants/*/menu/*/availability"
+    ).hasRole("ADMIN")
+
+    .requestMatchers(
+    HttpMethod.GET,
+    "/api/orders/history/*",
+    "/api/orders/*/reorder"
+).hasRole("CUSTOMER")
+
+.requestMatchers(
+    HttpMethod.GET,
+    "/api/orders/*/details"
+).hasAnyRole("ADMIN", "CUSTOMER")
+    // Admin Order Management
+    .requestMatchers("/api/orders/**")
+    .hasRole("ADMIN")
+
+    // Block other unconfigured endpoints
+    .anyRequest().denyAll()
+)
+.exceptionHandling(ex -> ex
+    .authenticationEntryPoint(
+        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+    )
+)
             .formLogin(form -> form
                 .loginProcessingUrl("/api/auth/login")
                 .usernameParameter("email")
