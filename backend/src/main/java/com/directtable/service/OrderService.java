@@ -19,6 +19,10 @@ import com.directtable.dto.ReorderResponse;
 import com.directtable.dto.ReorderItemResponse;
 import com.directtable.dto.OrderDetailsResponse;
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service//to let the spring know it's not an ordinary class, and to be able to manage the object
 public class OrderService {
@@ -61,7 +65,7 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     Restaurant restaurant = restaurantRepository
             .findById(request.getRestaurantId())
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
-    
+
     // Check order type before converting to uppercase
     if (request.getOrderType() == null) {
         throw new RuntimeException("Order type is required");
@@ -84,22 +88,41 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
 
         throw new RuntimeException("Address is required for delivery orders");
     }
+    // Get the logged-in customer
+    Authentication authentication =
+            SecurityContextHolder.getContext().getAuthentication();
 
+    if (authentication == null ||
+            authentication.getAuthorities().stream()
+                    .noneMatch(role ->
+                            role.getAuthority().equals("ROLE_CUSTOMER"))) {
 
-    // Search for an existing customer using the phone number
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Customer login required"
+        );
+    }
+
+    // Get phone number from the authenticated session
+    String loggedInPhone =
+            authentication.getName().substring("customer:".length());
+
+    // Ensure checkout phone matches the logged-in customer
+    if (!loggedInPhone.equals(request.getCustomerPhone())) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Phone number does not match logged-in customer"
+        );
+    }
+
+    // Find the customer using the session identity
     Customer customer = customerRepository
-            .findByPhone(request.getCustomerPhone())
-            .orElseGet(() -> {
+            .findByPhone(loggedInPhone)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Customer account not found"
+            ));
 
-                // If the customer does not exist, create a new customer
-                Customer newCustomer = new Customer();
-
-                newCustomer.setName(request.getCustomerName());
-                newCustomer.setPhone(request.getCustomerPhone());
-
-                // Save the new customer in the database
-                return customerRepository.save(newCustomer);
-            });
 
 
     // Create a new order object
@@ -145,7 +168,7 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
        MenuItem menuItem = menuItemRepository
     .findById(itemRequest.getMenuItemId())
     .orElseThrow(() -> new ResourceNotFoundException("Menu item not found"));
-    
+
         if (!menuItem.getRestaurant().getId().equals(restaurant.getId())) {
             throw new RuntimeException(
             "Menu item does not belong to this restaurant"
@@ -255,6 +278,29 @@ public CustomerOrder updateOrderStatus(Long id, String status) {
     return customerOrderRepository.save(order);
 }
 public List<OrderResponse> getCustomerOrderHistory(String phone) {
+    Authentication authentication =
+        SecurityContextHolder.getContext().getAuthentication();
+
+if (authentication == null ||
+        authentication.getAuthorities().stream()
+                .noneMatch(role ->
+                        role.getAuthority().equals("ROLE_CUSTOMER"))) {
+
+    throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "Customer access required"
+    );
+}
+
+String loggedInPhone =
+        authentication.getName().substring("customer:".length());
+
+if (!loggedInPhone.equals(phone)) {
+    throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "You cannot access another customer's orders"
+    );
+}
 
     return customerOrderRepository.findByCustomer_Phone(phone)
             .stream()
@@ -277,6 +323,29 @@ public ReorderResponse getReorderData(Long orderId) {
     CustomerOrder order = customerOrderRepository
         .findById(orderId)
         .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    Authentication authentication =
+        SecurityContextHolder.getContext().getAuthentication();
+
+if (authentication == null ||
+        authentication.getAuthorities().stream()
+                .noneMatch(role ->
+                        role.getAuthority().equals("ROLE_CUSTOMER"))) {
+
+    throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "Customer access required"
+    );
+}
+
+String loggedInPhone =
+        authentication.getName().substring("customer:".length());
+
+if (!order.getCustomer().getPhone().equals(loggedInPhone)) {
+    throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "You cannot reorder another customer's order"
+    );
+}
 
     // Get all items that belong to this order
     List<OrderItem> orderItems =
@@ -306,6 +375,30 @@ public OrderDetailsResponse getOrderDetails(Long orderId) {
     CustomerOrder order = customerOrderRepository
             .findById(orderId)
             .orElseThrow(() -> new RuntimeException("Order not found"));
+
+Authentication authentication =
+        SecurityContextHolder.getContext().getAuthentication();
+
+boolean isAdmin = authentication != null &&
+        authentication.getAuthorities().stream()
+                .anyMatch(role ->
+                        role.getAuthority().equals("ROLE_ADMIN"));
+
+boolean isOwner = authentication != null &&
+        authentication.getAuthorities().stream()
+                .anyMatch(role ->
+                        role.getAuthority().equals("ROLE_CUSTOMER")) &&
+        authentication.getName().equals(
+                "customer:" + order.getCustomer().getPhone()
+        );
+
+if (!isAdmin && !isOwner) {
+    throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "You cannot access this order"
+    );
+}
+
 
 
     List<ReorderItemResponse> items = order.getOrderItems()

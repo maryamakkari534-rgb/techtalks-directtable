@@ -6,7 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import java.util.List;
-
+import jakarta.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 // Represents a customer in the database
 @Entity
 public class Customer {
@@ -21,6 +22,10 @@ public class Customer {
     private String phone;
 
     private String email;
+
+    @JsonIgnore
+@Column(name = "password_hash")
+private String passwordHash;
 
     public Long getId() {
         return id;
@@ -59,5 +64,13 @@ public class Customer {
     // A customer can have multiple orders
 @OneToMany(mappedBy = "customer")
 private List<CustomerOrder> orders;
+@JsonIgnore
+public String getPasswordHash() {
+    return passwordHash;
+}
+
+public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+}
 
 }

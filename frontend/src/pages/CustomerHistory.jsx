@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CustomerHistory.css";
 
@@ -10,6 +10,28 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
   const [selectedOrderDetails, setSelectedOrderDetails] = useState({});
   const [reorderMessage, setReorderMessage] = useState("");
   const navigate = useNavigate();
+  const [loggedIn, setLoggedIn] = useState(false);
+const [checkingLogin, setCheckingLogin] = useState(true);
+const [password, setPassword] = useState("");
+const [loginError, setLoginError] = useState("");
+
+useEffect(() => {
+  fetch("/api/auth/me", {
+    credentials: "include"
+  })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      return res.json();
+    })
+    .then((data) => {
+      if (data?.email?.startsWith("customer:")) {
+        setLoggedIn(true);
+        setPhone(data.email.substring("customer:".length));
+      }
+    })
+    .catch(console.error)
+    .finally(() => setCheckingLogin(false));
+}, []);
 
   const getHistory = () => {
 
@@ -22,12 +44,19 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
 
     fetch(`/api/orders/history/${phone}`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch history");
-        }
+  if (res.status === 401) {
+    setLoggedIn(false);
+    setOrders([]);
+    setLoginError("Session expired. Please login again.");
+    throw new Error("Session expired");
+  }
 
-        return res.json();
-      })
+  if (!res.ok) {
+    throw new Error("Failed to fetch history");
+  }
+
+  return res.json();
+})
       .then((data) => {
         setOrders(data);
         setLoading(false);
@@ -37,6 +66,57 @@ function CustomerHistory({ onAddToCart, setShowCheckout }) {
         setLoading(false);
       });
   };
+  useEffect(() => {
+  if (loggedIn && phone) {
+    getHistory();
+  }
+}, [loggedIn, phone]);
+
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoginError("");
+
+  if (!/^[0-9]{8}$/.test(phone.trim())) {
+    setLoginError("Phone number must contain 8 digits.");
+    return;
+  }
+
+  try {
+    const csrfResponse = await fetch("/api/auth/csrf", {
+      credentials: "include"
+    });
+
+    if (!csrfResponse.ok) {
+      throw new Error("Failed to get CSRF token");
+    }
+
+    const csrfData = await csrfResponse.json();
+
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-XSRF-TOKEN": csrfData.token
+      },
+      body: new URLSearchParams({
+        email: `customer:${phone.trim()}`,
+        password: password
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Invalid phone number or password");
+    }
+
+    setLoggedIn(true);
+    setPassword("");
+
+  } catch (error) {
+    setLoginError(error.message);
+  }
+};
+
 const handleReorder = (orderId) => {
 
   setReorderMessage("");
@@ -124,6 +204,73 @@ const handleViewDetails = (orderId) => {
     });
 };
 
+if (checkingLogin) {
+  return (
+    <div className="history-page">
+      <div className="history-container">
+        <p>Checking login...</p>
+      </div>
+    </div>
+  );
+}
+
+if (!loggedIn) {
+  return (
+    <div className="history-page">
+      <div className="history-container">
+
+        <div className="history-header">
+          <div>
+            <h1>My Orders</h1>
+            <p>Login to view your order history.</p>
+          </div>
+        </div>
+
+        <div className="history-search-card">
+          <h3>Customer Login</h3>
+
+          <form onSubmit={handleLogin}>
+
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              placeholder="8-digit phone number"
+              value={phone}
+              maxLength={8}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            {loginError && (
+              <p style={{ color: "red" }}>
+                {loginError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="history-search-btn"
+            >
+              Login
+            </button>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 return (
   <div className="history-page">
 
@@ -137,28 +284,9 @@ return (
       </div>
 
       <div className="history-search-card">
-
-        <label>Phone Number</label>
-
-        <div className="history-search-row">
-
-          <input
-            type="text"
-            placeholder="Enter phone number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-
-          <button
-            className="history-search-btn"
-            onClick={getHistory}
-          >
-            View History
-          </button>
-
-        </div>
-
-      </div>
+  <label>Logged in as</label>
+  <p>{phone}</p>
+</div>
 
       {loading && (
         <div className="history-message">
@@ -183,11 +311,11 @@ return (
       )}
 
       {!loading && orders.length === 0 && (
-        <div className="history-empty">
-          <h3>No orders found</h3>
-          <p>Enter your phone number to view your previous orders.</p>
-        </div>
-      )}
+  <div className="history-empty">
+    <h3>No orders found</h3>
+    <p>You haven't placed any orders yet.</p>
+  </div>
+)}
 
       <div className="orders-list">
 
