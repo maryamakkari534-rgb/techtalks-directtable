@@ -52,7 +52,7 @@ function App() {
         <header className="dt-site-header">
           <div className="dt-brand">
             <span className="dt-brand-label">RESTAURANT & SWEETS</span>
-            <h1>La Rose Sucrée</h1>
+            <h1>La Rose Sucre</h1>
             <p>Fresh flavors, sweet moments.</p>
           </div>
 
