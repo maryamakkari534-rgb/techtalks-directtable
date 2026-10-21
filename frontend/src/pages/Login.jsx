@@ -14,7 +14,6 @@ function Login() {
     setLoading(true);
 
     try {
-      
       const csrfResponse = await fetch("/api/auth/csrf", {
         method: "GET",
         credentials: "include", 
@@ -26,20 +25,25 @@ function Login() {
         csrfToken = csrfData.token || csrfData.csrfToken || "";
       }
 
-      
+      // 1. تجهيز البيانات بصيغة Form Data ليقبلها Spring Boot
+      const params = new URLSearchParams();
+      params.append("email", email);
+      params.append("password", password);
+
+      // 2. إرسال الطلب مع تغيير الـ Content-Type
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
           "X-XSRF-TOKEN": csrfToken,
         },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: params.toString(), 
       });
 
-      
       if (response.status === 200) {
-        navigate("/admin");
+        // التوجيه للداشبورد مباشرة بعد النجاح
+        navigate("/dashboard/orders");
       } else if (response.status === 401) {
         setError("Invalid Credentials");
       } else {
