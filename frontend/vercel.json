@@ -1,0 +1,17 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://techtalks-directtable.onrender.com/api/:path*"
+    },
+    {
+      "source": "/restaurants/:path*",
+      "destination": "https://techtalks-directtable.onrender.com/restaurants/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
