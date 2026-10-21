@@ -79,7 +79,11 @@ public class SecurityConfig {
 
     .requestMatchers(
     HttpMethod.GET,
-    "/api/orders/history/*",
+    "/api/orders/history/*"
+).hasAnyRole("ADMIN", "CUSTOMER")
+
+.requestMatchers(
+    HttpMethod.GET,
     "/api/orders/*/reorder"
 ).hasRole("CUSTOMER")
 

@@ -225,6 +225,7 @@ public CustomerOrder createOrder(CreateOrderRequest request) {
     public List<OrderResponse> getAllOrders() {
     return customerOrderRepository.findAll()
             .stream()
+            .filter(order -> !order.isArchived())
             .map(order -> new OrderResponse(
                     order.getId(),
                     order.getCustomer().getName(),
@@ -281,25 +282,33 @@ public List<OrderResponse> getCustomerOrderHistory(String phone) {
     Authentication authentication =
         SecurityContextHolder.getContext().getAuthentication();
 
-if (authentication == null ||
+boolean isAdmin = authentication != null &&
         authentication.getAuthorities().stream()
-                .noneMatch(role ->
-                        role.getAuthority().equals("ROLE_CUSTOMER"))) {
+                .anyMatch(role ->
+                        role.getAuthority().equals("ROLE_ADMIN"));
 
+boolean isCustomer = authentication != null &&
+        authentication.getAuthorities().stream()
+                .anyMatch(role ->
+                        role.getAuthority().equals("ROLE_CUSTOMER"));
+
+if (!isAdmin && !isCustomer) {
     throw new ResponseStatusException(
             HttpStatus.FORBIDDEN,
-            "Customer access required"
+            "Login required"
     );
 }
 
-String loggedInPhone =
-        authentication.getName().substring("customer:".length());
+if (isCustomer) {
+    String loggedInPhone =
+            authentication.getName().substring("customer:".length());
 
-if (!loggedInPhone.equals(phone)) {
-    throw new ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "You cannot access another customer's orders"
-    );
+    if (!loggedInPhone.equals(phone)) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "You cannot access another customer's orders"
+        );
+    }
 }
 
     return customerOrderRepository.findByCustomer_Phone(phone)
@@ -426,4 +435,28 @@ if (!isAdmin && !isOwner) {
             items
     );
 }
+
+@Transactional
+public void archiveOrder(Long orderId) {
+
+    CustomerOrder order = customerOrderRepository
+            .findById(orderId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Order not found")
+            );
+
+    // Only completed orders can be archived
+    if (!"COMPLETED".equals(order.getStatus())) {
+        throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Only completed orders can be archived"
+        );
+    }
+
+    // Hide from dashboard without deleting
+    order.setArchived(true);
+
+    customerOrderRepository.save(order);
+}
+
 }

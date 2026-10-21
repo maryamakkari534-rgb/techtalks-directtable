@@ -56,33 +56,108 @@ function OrdersDashboard() {
   }, []);
 
   // Update order status via API
-  const handleStatusChange = async (orderId, newStatus) => {
-    setUpdatingId(orderId);
-    try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+  
+const handleStatusChange = async (orderId, newStatus) => {
+  setUpdatingId(orderId);
+
+  try {
+    // Get CSRF token
+    const csrfResponse = await fetch("/api/auth/csrf", {
+      credentials: "include"
+    });
+
+    if (!csrfResponse.ok) {
+      throw new Error("Failed to get CSRF token");
+    }
+
+    const csrfData = await csrfResponse.json();
+
+    // Update order status
+    const response = await fetch(
+      `/api/orders/${orderId}/status`,
+      {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "X-XSRF-TOKEN": csrfData.token
         },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message);
+        body: JSON.stringify({ status: newStatus })
       }
+    );
 
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus } : order
-        )
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      throw new Error(
+        errorData?.message ||
+        `Failed to update status (HTTP ${response.status})`
       );
-    } catch (err) {
-      alert("Error updating status: " + err.message);
-    } finally {
-      setUpdatingId(null);
     }
-  };
+
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId
+          ? { ...order, status: newStatus }
+          : order
+      )
+    );
+
+  } catch (err) {
+    alert("Error updating status: " + err.message);
+  } finally {
+    setUpdatingId(null);
+  }
+};
+
+
+const handleArchiveOrder = async (orderId) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to archive this order?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const csrfResponse = await fetch("/api/auth/csrf", {
+      credentials: "include"
+    });
+
+    if (!csrfResponse.ok) {
+      throw new Error("Failed to get CSRF token");
+    }
+
+    const csrfData = await csrfResponse.json();
+
+    const response = await fetch(
+      `/api/orders/${orderId}/archive`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "X-XSRF-TOKEN": csrfData.token
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      throw new Error(
+        errorData?.message ||
+        `Failed to archive order (HTTP ${response.status})`
+      );
+    }
+
+    // Remove archived order from dashboard
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.id !== orderId)
+    );
+
+  } catch (error) {
+    alert("Error archiving order: " + error.message);
+  }
+};
 
   // Toggle Expand/Collapse for order items
   const toggleOrderDetails = async (orderId) => {
@@ -183,20 +258,7 @@ function OrdersDashboard() {
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-        <Link
-          to="/customer-history"
-          style={{
-            display: "inline-block",
-            textDecoration: "none",
-            padding: "8px 14px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            color: "#333",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          View Customer History
-        </Link>
+
 
         {/* Filter Controls & Search */}
         <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
@@ -267,6 +329,7 @@ function OrdersDashboard() {
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Status</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Action</th>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Details</th>
+              <th style={{ padding: "10px", border: "1px solid #ddd" }}>Archive</th>
             </tr>
           </thead>
           <tbody>
@@ -353,6 +416,24 @@ function OrdersDashboard() {
                       {expandedOrders[order.id] ? "Hide Items" : "View Items"}
                     </button>
                   </td>
+                  <td style={{ padding: "10px", border: "1px solid #ddd" }}>
+  {order.status === "COMPLETED" && (
+    <button
+      type="button"
+      onClick={() => handleArchiveOrder(order.id)}
+      style={{
+        backgroundColor: "#397D9F",
+        color: "white",
+        padding: "8px 12px",
+        border: "none",
+        borderRadius: "8px",
+        cursor: "pointer"
+      }}
+    >
+      Archive
+    </button>
+  )}
+</td>
                 </tr>
 
                 {expandedOrders[order.id] && (
