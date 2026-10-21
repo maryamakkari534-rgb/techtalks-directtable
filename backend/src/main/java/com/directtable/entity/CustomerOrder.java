@@ -18,6 +18,7 @@ public class CustomerOrder {
     private Long id;
 
     private String status;
+    private Boolean archived = false;
 
     private String createdAt;
 
@@ -125,5 +126,12 @@ public List<OrderItem> getOrderItems() {
 
 public void setOrderItems(List<OrderItem> orderItems) {
     this.orderItems = orderItems;
+}
+public boolean isArchived() {
+    return Boolean.TRUE.equals(archived);
+}
+
+public void setArchived(boolean archived) {
+    this.archived = archived;
 }
 }

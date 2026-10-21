@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const deliveryAreas = [
@@ -33,6 +33,178 @@ function Checkout({
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+  const [checkingLogin, setCheckingLogin] = useState(true);
+  const [authMode, setAuthMode] = useState("login");
+  const [authName, setAuthName] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [authenticating, setAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkCustomerLogin = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include"
+        });
+
+        if (!response.ok) return;
+        const data = await response.json();
+
+        if (!cancelled && data.email?.startsWith("customer:")) {
+          const phone = data.email.substring("customer:".length);
+          setCustomerLoggedIn(true);
+          setFormData((prev) => ({ ...prev, customerPhone: phone }));
+        }
+      } catch (error) {
+        if (!cancelled) setAuthError("Could not check login. Please try again.");
+      } finally {
+        if (!cancelled) setCheckingLogin(false);
+      }
+    };
+
+    checkCustomerLogin();
+    return () => { cancelled = true; };
+  }, []);
+
+  const getCsrfToken = async () => {
+    const response = await fetch("/api/auth/csrf", {
+      credentials: "include",
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Could not prepare secure request.");
+    const data = await response.json();
+    if (!data.token) throw new Error("CSRF token was not provided.");
+    return data.token;
+  };
+
+  const loginCustomer = async (phone, password) => {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-XSRF-TOKEN": csrfToken
+      },
+      body: new URLSearchParams({
+        email: `customer:${phone}`,
+        password
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Invalid phone number or password.");
+    }
+
+    const meResponse = await fetch("/api/auth/me", { credentials: "include" });
+    if (!meResponse.ok) throw new Error("Could not confirm customer login.");
+    const me = await meResponse.json();
+    if (me.email !== `customer:${phone}`) {
+      throw new Error("Unexpected account. Please sign in again.");
+    }
+
+    setCustomerLoggedIn(true);
+    setFormData((prev) => ({
+      ...prev,
+      customerPhone: phone,
+      customerName: authMode === "signup" ? authName.trim() : prev.customerName
+    }));
+    setAuthPassword("");
+    setConfirmPassword("");
+    setAuthError("");
+  };
+
+  const handleAuth = async (event) => {
+    event.preventDefault();
+    setAuthError("");
+
+    const phone = authPhone.trim();
+    if (!/^[0-9]{8}$/.test(phone)) {
+      setAuthError("Phone number must contain 8 digits.");
+      return;
+    }
+    if (authPassword.length < 8) {
+      setAuthError("Password must contain at least 8 characters.");
+      return;
+    }
+    if (authMode === "signup") {
+      if (!authName.trim()) {
+        setAuthError("Please enter your full name.");
+        return;
+      }
+      if (authPassword !== confirmPassword) {
+        setAuthError("Passwords do not match.");
+        return;
+      }
+    }
+
+    setAuthenticating(true);
+    try {
+      if (authMode === "signup") {
+        const csrfToken = await getCsrfToken();
+        const signupResponse = await fetch("/api/customer/auth/signup", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-XSRF-TOKEN": csrfToken
+          },
+          body: JSON.stringify({
+            name: authName.trim(),
+            phone,
+            password: authPassword
+          })
+        });
+
+        if (signupResponse.status === 409) {
+          throw new Error("Phone number is already registered. Please sign in.");
+        }
+        if (!signupResponse.ok) {
+          throw new Error("Signup failed. Please check your information.");
+        }
+      }
+
+      // After signup, sign in automatically using the new account.
+      await loginCustomer(phone, authPassword);
+    } catch (error) {
+      setAuthError(error.message || "Authentication failed.");
+    } finally {
+      setAuthenticating(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setAuthError("");
+    setAuthenticating(true);
+    try {
+      const csrfToken = await getCsrfToken();
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-XSRF-TOKEN": csrfToken }
+      });
+      if (!response.ok) throw new Error("Logout failed.");
+
+      setCustomerLoggedIn(false);
+      setAuthPhone("");
+      setAuthPassword("");
+      setConfirmPassword("");
+      setFormData((prev) => ({
+        ...prev,
+        customerName: "",
+        customerPhone: ""
+      }));
+    } catch (error) {
+      setAuthError(error.message || "Logout failed.");
+    } finally {
+      setAuthenticating(false);
+    }
+  };
 
   const isDelivery = formData.orderType === "DELIVERY";
 
@@ -100,30 +272,38 @@ function Checkout({
       }))
     };
 
-    setSubmitting(true);
+    if (!customerLoggedIn) {
+      setErrorMessage("Please sign in before placing an order.");
+      return;
+    }
 
+    setSubmitting(true);
     try {
+      // Request a new token after login because Spring Security may rotate it.
+      const csrfToken = await getCsrfToken();
       const response = await fetch("/api/orders", {
         method: "POST",
+        credentials: "include",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-XSRF-TOKEN": csrfToken
         },
         body: JSON.stringify(orderPayload)
       });
 
+      if (response.status === 401) {
+        setCustomerLoggedIn(false);
+        throw new Error("Session expired. Please log in again.");
+      }
       if (!response.ok) {
         throw new Error("Failed to place order. Please check your details.");
       }
 
       alert("Order placed successfully!");
-
-      if (onClearCart) {
-        onClearCart();
-      }
-
+      onClearCart?.();
       navigate("/");
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || "Failed to place order.");
     } finally {
       setSubmitting(false);
     }
@@ -279,6 +459,122 @@ function Checkout({
         </h3>
       </div>
 
+      {/* Customer authentication - the cart is visible even before login. */}
+      {checkingLogin ? (
+        <div style={{ background: "#FFFFFF", padding: "25px", borderRadius: "14px", border: "1px solid #BDE7FA" }}>
+          Checking customer login...
+        </div>
+      ) : !customerLoggedIn ? (
+        <div style={{ background: "#FFFFFF", padding: "25px", borderRadius: "14px", border: "1px solid #BDE7FA" }}>
+          <h3>{authMode === "signup" ? "Create Customer Account" : "Customer Login"}</h3>
+          <p style={{ fontSize: "14px" }}>
+            {authMode === "signup"
+              ? "First order? Create an account to track your orders."
+              : "Log in to place your order and view your history."}
+          </p>
+
+          {authError && <p role="alert" style={{ color: "#b42332" }}>{authError}</p>}
+
+          <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {authMode === "signup" && (
+              <div>
+                <label htmlFor="signup-name">Full Name *</label>
+                <input
+                  id="signup-name"
+                  type="text"
+                  value={authName}
+                  onChange={(e) => setAuthName(e.target.value)}
+                  autoComplete="name"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            )}
+            <div>
+              <label htmlFor="auth-phone">Phone Number *</label>
+              <input
+                id="auth-phone"
+                type="tel"
+                value={authPhone}
+                onChange={(e) => setAuthPhone(e.target.value)}
+                maxLength={8}
+                inputMode="numeric"
+                pattern="[0-9]{8}"
+                autoComplete="tel"
+                placeholder="8 digits"
+                required
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label htmlFor="auth-password">Password *</label>
+              <input
+                id="auth-password"
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                minLength={8}
+                autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+                required
+                style={inputStyle}
+              />
+            </div>
+            {authMode === "signup" && (
+              <div>
+                <label htmlFor="confirm-password">Confirm Password *</label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={8}
+                  autoComplete="new-password"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={authenticating}
+              style={{ background: "#397D9F", color: "white", border: "none", padding: "14px", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" }}
+            >
+              {authenticating ? "Please wait..." : authMode === "signup" ? "Sign Up & Continue" : "Login & Continue"}
+            </button>
+          </form>
+
+          <p style={{ marginTop: "16px" }}>
+            {authMode === "signup" ? "Already registered? " : "New customer? "}
+            <button
+              type="button"
+              disabled={authenticating}
+              onClick={() => {
+                setAuthError("");
+                setAuthPassword("");
+                setConfirmPassword("");
+                setAuthMode(authMode === "signup" ? "login" : "signup");
+              }}
+              style={{ background: "transparent", border: "none", color: "#245B78", fontWeight: "bold", cursor: "pointer", textDecoration: "underline" }}
+            >
+              {authMode === "signup" ? "Login" : "Create an account"}
+            </button>
+          </p>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "12px" }}>
+            <span>Logged in as: <strong>{formData.customerPhone}</strong></span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={authenticating || submitting}
+              style={{ background: "transparent", border: "1px solid #BDE7FA", padding: "8px 14px", borderRadius: "8px", color: "#245B78", cursor: "pointer" }}
+            >
+              Logout
+            </button>
+          </div>
+          {authError && <p role="alert" style={{ color: "#b42332" }}>{authError}</p>}
+
       {/* Checkout Form */}
 
       <div
@@ -352,7 +648,7 @@ function Checkout({
               type="tel"
               name="customerPhone"
               value={formData.customerPhone}
-              onChange={handleChange}
+              readOnly
               maxLength={8}
               placeholder="8 digits"
               required
@@ -437,6 +733,8 @@ function Checkout({
           </button>
         </form>
       </div>
+        </>
+      )}
     </div>
   );
 }

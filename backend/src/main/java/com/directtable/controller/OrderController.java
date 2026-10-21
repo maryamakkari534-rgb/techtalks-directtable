@@ -17,6 +17,7 @@ import com.directtable.dto.UpdateOrderStatusRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.directtable.dto.ReorderResponse;
+import org.springframework.web.bind.annotation.PatchMapping;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -95,5 +96,13 @@ public ResponseEntity<OrderDetailsResponse> getOrderDetails(
             orderService.getOrderDetails(id);
 
     return ResponseEntity.ok(response);
+}
+@PatchMapping("/{id}/archive")
+public ResponseEntity<Void> archiveOrder(
+        @PathVariable Long id) {
+
+    orderService.archiveOrder(id);
+
+    return ResponseEntity.noContent().build();
 }
 }

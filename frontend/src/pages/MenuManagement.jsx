@@ -10,6 +10,31 @@ const emptyForm = {
   available: true,
 };
 
+// Include the admin session and a fresh CSRF token for every write request.
+const fetchWithCsrf = async (url, options = {}) => {
+  const csrfResponse = await fetch("/api/auth/csrf", {
+    credentials: "include",
+  });
+
+  if (!csrfResponse.ok) {
+    throw new Error(`Failed to get CSRF token (HTTP ${csrfResponse.status})`);
+  }
+
+  const csrfData = await csrfResponse.json();
+  if (!csrfData.token) {
+    throw new Error("CSRF token was missing from the server response");
+  }
+
+  return fetch(url, {
+    ...options,
+    credentials: "include",
+    headers: {
+      ...(options.headers || {}),
+      "X-XSRF-TOKEN": csrfData.token,
+    },
+  });
+};
+
 function MenuManagement() {
   const [menuItems, setMenuItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,7 +53,7 @@ function MenuManagement() {
 
   // Load menu items
   const fetchMenuItems = async () => {
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, { credentials: "include" });
 
     if (!response.ok) {
       throw new Error("Failed to load menu items");
@@ -143,7 +168,7 @@ function MenuManagement() {
         ? `${apiUrl}/${editingId}`
         : apiUrl;
 
-      const response = await fetch(url, {
+      const response = await fetchWithCsrf(url, {
         method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +205,7 @@ function MenuManagement() {
     setMessage("");
 
     try {
-      const response = await fetch(
+      const response = await fetchWithCsrf(
         `${apiUrl}/${item.id}/availability`,
         {
           method: "PATCH",
@@ -220,7 +245,7 @@ function MenuManagement() {
     setMessage("");
 
     try {
-      const response = await fetch(`${apiUrl}/${item.id}`, {
+      const response = await fetchWithCsrf(`${apiUrl}/${item.id}`, {
         method: "DELETE",
       });
 
