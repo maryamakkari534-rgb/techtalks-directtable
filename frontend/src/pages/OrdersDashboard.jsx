@@ -1,6 +1,6 @@
 import LogoutButton from "../components/LogoutButton";
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import "./OrdersDashboard.css";
 
 function OrdersDashboard() {
   const [orders, setOrders] = useState([]);
@@ -8,6 +8,7 @@ function OrdersDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [archivingId, setArchivingId] = useState(null);
 
   // Filter & Search States
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -112,12 +113,14 @@ const handleStatusChange = async (orderId, newStatus) => {
 
 
 const handleArchiveOrder = async (orderId) => {
+  if (archivingId !== null) return;
   const confirmed = window.confirm(
     "Are you sure you want to archive this order?"
   );
 
   if (!confirmed) return;
 
+  setArchivingId(orderId);
   try {
     const csrfResponse = await fetch("/api/auth/csrf", {
       credentials: "include"
@@ -156,6 +159,8 @@ const handleArchiveOrder = async (orderId) => {
 
   } catch (error) {
     alert("Error archiving order: " + error.message);
+  } finally {
+    setArchivingId(null);
   }
 };
 
@@ -229,14 +234,15 @@ const handleArchiveOrder = async (orderId) => {
   if (error) return <div style={{ padding: "20px", color: "red" }}>Error: {error}</div>;
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+    <div className="orders-dashboard">
       {/* Header with Title and Logout Button */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+      <div className="orders-dashboard-header">
         <h2>Orders & Delivery Management</h2>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div className="orders-header-actions">
           {/* Refresh Button */}
           <button
+            className="orders-refresh-button"
             onClick={() => fetchOrders(true)}
             disabled={isRefreshing}
             style={{
@@ -261,7 +267,7 @@ const handleArchiveOrder = async (orderId) => {
 
 
         {/* Filter Controls & Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
+        <div className="orders-filters">
           {/* Customer / Phone Search */}
           <input
             type="text"
@@ -316,7 +322,8 @@ const handleArchiveOrder = async (orderId) => {
       {filteredOrders.length === 0 ? (
         <p>No orders found matching the selected criteria.</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+        <div className="orders-table-wrapper" role="region" aria-label="Orders table" tabIndex={0}>
+        <table className="orders-table">
           <thead>
             <tr style={{ backgroundColor: "#f2f2f2", textAlign: "left" }}>
               <th style={{ padding: "10px", border: "1px solid #ddd" }}>Order ID</th>
@@ -404,13 +411,13 @@ const handleArchiveOrder = async (orderId) => {
                   </td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>
                     <button
+                      type="button"
+                      className="orders-details-button"
                       onClick={() => toggleOrderDetails(order.id)}
                       style={{
-                        padding: "5px 10px",
+                        padding: "8px 12px",
                         cursor: "pointer",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        backgroundColor: "#fafafa"
+                        borderRadius: "6px"
                       }}
                     >
                       {expandedOrders[order.id] ? "Hide Items" : "View Items"}
@@ -420,6 +427,8 @@ const handleArchiveOrder = async (orderId) => {
   {order.status === "COMPLETED" && (
     <button
       type="button"
+      className="orders-archive-button"
+      disabled={archivingId !== null}
       onClick={() => handleArchiveOrder(order.id)}
       style={{
         backgroundColor: "#397D9F",
@@ -430,7 +439,7 @@ const handleArchiveOrder = async (orderId) => {
         cursor: "pointer"
       }}
     >
-      Archive
+      {archivingId === order.id ? "Archiving..." : "Archive"}
     </button>
   )}
 </td>
@@ -438,7 +447,7 @@ const handleArchiveOrder = async (orderId) => {
 
                 {expandedOrders[order.id] && (
                   <tr>
-                    <td colSpan="10" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
+                    <td colSpan="11" style={{ backgroundColor: "#f9f9f9", padding: "15px", border: "1px solid #ddd" }}>
                       <strong>Order Items:</strong>
                       {orderDetails[order.id]?.items && orderDetails[order.id].items.length > 0 ? (
                         <ul style={{ marginTop: "8px", marginBottom: "0" }}>
@@ -458,6 +467,7 @@ const handleArchiveOrder = async (orderId) => {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
