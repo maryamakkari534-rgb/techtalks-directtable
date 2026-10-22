@@ -26,3 +26,15 @@ replay_pid*
 backend/target/
 techtalks-directtable/
 .vscode/
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local credentials
+*.pem
+*.key
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
